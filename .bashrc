@@ -133,7 +133,6 @@ alias yum='sudo yum'
 alias tree='tree -Ca -I ".git|*.pyc|*.swp"'
 
 ## Git
-alias git='hub'
 alias ga='git add'
 alias gb='git branch'
 alias gba='git branch -a'
