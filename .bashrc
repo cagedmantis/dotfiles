@@ -90,11 +90,8 @@ fi
 
 # Paths
 export PATH=${PATH}:/home/camedee/bin/android-sdk-linux_86/tools:$HOME/bin
-#export PATH=$HOME/bin
 export CLASSPATH=
 export CLOJURE_EXT=$HOME/.clojure
-
-# Exports
 export TERM="xterm-color"
 export DISPLAY=:0.0
 export EDITOR=emacs
