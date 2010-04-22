@@ -1,0 +1,4 @@
+# /bin/bash
+/usr/bin/emacs -l /home/camedee/.emacs.d/init.el & 
+# GDK_NATIVE_WINDOWS=1 /usr/bin/emacs &
+
