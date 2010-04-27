@@ -52,7 +52,7 @@ fi
 if [ "$color_prompt" = yes ]; then
     PS1='\n${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+    PS1='\n${debian_chroot:+($debian_chroot)}\u@\h:\w\n\$ '
 fi
 
 unset color_prompt force_color_prompt
@@ -90,8 +90,11 @@ fi
 
 # Paths
 export PATH=${PATH}:/home/camedee/bin/android-sdk-linux_86/tools:$HOME/bin
+#export PATH=$HOME/bin
 export CLASSPATH=
 export CLOJURE_EXT=$HOME/.clojure
+
+# Exports
 export TERM="xterm-color"
 export DISPLAY=:0.0
 export EDITOR=emacs
