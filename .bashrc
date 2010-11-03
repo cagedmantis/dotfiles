@@ -1,46 +1,14 @@
 # ~/.bashrc
-
-# In need of a major reorg.
-
-
-#####################
-# Bash initialization
-#
-# LOGIN:
-# /etc/profile
-# /etc/profile.env (if exists)
-# /etc/bash/bashrc (if exists)
-# /etc/profile.d/*.sh (if exists)
-# 
-# ~/.bash_profile
-# /etc/bashrc
-# ~/.bashrc (if exists)
-# if( ~/.bash_profile doesn't exist)
-# ~/.bash_login
-# if( ~/.bash_profile doesn't exist)
-# ~/.bash_login
-#
-# NON-LOGIN
-# /etc/bash/bashrc
-# ~/.bashrc
-
+# Carlos Amedee
+# www.amedee.net
 
 # If not running interactively, don't do anything
 # [ -z "$PS1" ] && return
 
-# don't put duplicate lines in the history. See bash(1) for more options
-# don't overwrite GNU Midnight Commander's setting of `ignorespace'.
-# HISTCONTROL=$HISTCONTROL${HISTCONTROL+,}ignoredups
-# ... or force ignoredups and ignorespace
-# HISTCONTROL=ignoreboth
 
-# append to the history file, don't overwrite it
-shopt -s histappend
-
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-# check the window size after each command and, if necessary,
-# update the values of LINES and COLUMNS.
-shopt -s checkwinsize
+# shopt settings
+shopt -s histappend # append to the history file, don't overwrite it
+shopt -s checkwinsize # Check the window size.
 shopt -s cdspell # This will correct minor spelling errors in a cd command.
 shopt -s dotglob # files beginning with . to be returned in the results of path-name expansion.
 
@@ -52,16 +20,7 @@ if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
     debian_chroot=$(cat /etc/debian_chroot)
 fi
 
-# set a fancy prompt (non-color, unless we know we "want" color)
-#case "$TERM" in
-#    xterm-color) color_prompt=yes;;
-#esac
-
-# uncomment for a colored prompt, if the terminal has the capability; turned
-# off by default to not distract the user: the focus in a terminal window
-# should be on the output of commands, not on the prompt
 force_color_prompt=yes
-
 if [ -n "$force_color_prompt" ]; then
     if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
 	# We have color support; assume it's compliant with Ecma-48
@@ -73,11 +32,7 @@ if [ -n "$force_color_prompt" ]; then
     fi
 fi
 
-#if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
-#else
-#    PS1='\n${debian_chroot:+($debian_chroot)}\u@\h:\w\n\$ '
-#fi
+PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '
 
 unset color_prompt force_color_prompt
 
@@ -90,54 +45,37 @@ xterm*|rxvt*)
     ;;
 esac
 
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
-
-
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
-if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
-    . /etc/bash_completion
-fi
-
-
-######################################
-# Begining of personal custom settings
-######################################
-
 # Paths
-export PATH=${PATH}:/home/camedee/bin/android-sdk-linux_86/tools:$HOME/bin
-#export PATH=$HOME/bin
 export CLASSPATH=
 export CLOJURE_EXT=$HOME/.clojure
+if [ -d $HOME/bin ]; then
+    export PATH=${PATH}:$HOME/bin/android-sdk-linux_86/tools:$HOME/bin
+fi
 
-# Exports
+# System settings
 export TERM="xterm-color"
 export DISPLAY=:0.0
 export EDITOR=emacs
 
-
 # Alias
-
 ## System
 if [ -x /usr/bin/dircolors ]; then
-  test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-  alias ls='ls --color=auto'
-  alias la='ls -A'
-  alias l='ls -CF'
-  alias l='ls -lah' 
-  alias la='ls -AF' 
-  alias ll='ls -lFh' 
-  alias grep='grep --color=auto' 
-  alias fgrep='fgrep --color=auto'
-  alias egrep='egrep --color=auto'
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    alias la='ls -A'
+    alias l='ls -CF'
+    alias l='ls -lah' 
+    alias la='ls -AF' 
+    alias ll='ls -lFh' 
+    alias grep='grep --color=auto' 
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+else
+    alias la='ls -A'
+    alias l='ls -CF'
+    alias l='ls -lah' 
+    alias la='ls -AF' 
+    alias ll='ls -lFh' 
 fi
 
 alias rdesktop='rdesktop -g 1024x800'
@@ -177,14 +115,5 @@ alias gd='git diff | $GIT_EDITOR -'
 alias gmv='git mv'
 alias gho='$(git remote -v 2> /dev/null | grep github | sed -e "s/.*git\:\/\/\([a-z]\.\)*/\1/" -e "s/\.git$//g" -e "s/.*@\(.*\)$/\1/g" | tr ":" "/" | tr -d "\011" | sed -e "s/^/open http:\/\//g")'
 
-## Prompt Colors
-## Not in use yet.
-BGREEN='\[\033[1;32m\]'
-GREEN='\[\033[0;32m\]'
-BRED='\[\033[1;31m\]'
-RED='\[\033[0;31m\]'
-BBLUE='\[\033[1;34m\]'
-BLUE='\[\033[0;34m\]'
-NORMAL='\[\033[00m\]'
-
-
+## OSX
+alias port='sudo port'
