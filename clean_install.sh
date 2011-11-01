@@ -14,3 +14,16 @@ sudo update-alternatives --config java
 
 # email client
 sudo apt-get install alpine
+
+# install haskell
+sudo apt-get install ghc6 ghc6-prof ghc6-doc
+
+# install emacs
+sudo apt-get install emacs haskell-mode
+
+# install Latex
+sudo apt-get install auctex texlive-full gedit-latex-plugin texlive-fonts-recommended latex-beamer texpower texlive-pictures texlive-latex-extra texpower-examples texlive-latex-recommended texlive-latex-base
+
+# install imagemagick
+sudo apt-get install imagemagick
+
