@@ -48,9 +48,9 @@ shopt -s cmdhist
 # If window size changes, redraw contents
 shopt -s checkwinsize
 
+# Prompt
+export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e[0;33m\]\w\[\033[00m\]\n$ "
 
-
-export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\033[01;34m\]\e[0;33m\]\w\[\033[00m\]\n$ "
 
 # Aliases
 
@@ -80,7 +80,6 @@ alias du='du -h -c'
 alias screen='TERM=screen screen'
 alias recent="ls -lAt | head"
 alias back='cd $OLDPWD'
-alias rtfm='man'
 alias openports='sudo lsof -i -P | grep -i "listen"'
 
 ## Debian/Ubuntu
