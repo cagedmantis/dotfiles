@@ -51,6 +51,8 @@ shopt -s checkwinsize
 # Prompt
 export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e[0;33m\]\w\[\033[00m\]\n$ "
 
+# Try this out...
+# PS1="\[\033[G\]$PS1"
 
 # Aliases
 
