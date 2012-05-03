@@ -27,3 +27,14 @@ sudo apt-get install auctex texlive-full gedit-latex-plugin texlive-fonts-recomm
 # install imagemagick
 sudo apt-get install imagemagick
 
+# install pip
+sudo apt-get install python-pip
+
+# install easy_install
+sudo apt-get install python-setuptools
+
+# install clang
+sudo apt-get install clang
+
+# install virtualenv
+sudo pip install virtualenv
