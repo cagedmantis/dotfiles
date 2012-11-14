@@ -38,3 +38,7 @@ sudo apt-get install clang
 
 # install virtualenv
 sudo pip install virtualenv
+
+
+#osx
+brew install aspell --lang=en

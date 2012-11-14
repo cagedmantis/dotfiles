@@ -102,7 +102,7 @@ case $MACHTYPE in
 
     ;;
     *darwin*)
-
+	alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
     ;;
     *cygwin*)
 
