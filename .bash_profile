@@ -1,6 +1,5 @@
 # ~/.bash_profile
 # Carlos Amedee
-# www.amedee.net
 
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
@@ -23,5 +22,4 @@ case $MACHTYPE in
     *)
     ;;
 esac
-
 

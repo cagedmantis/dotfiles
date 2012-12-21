@@ -1,6 +1,5 @@
 # ~/.bashrc
 # Carlos Amedee
-# www.amedee.net
 
 # Paths
 PATH=$PATH:$HOME/bin
@@ -9,15 +8,13 @@ export CLASSPATH=
 
 export CLOJURE_EXT=$HOME/.clojure
 
+# Android tools
 if [ -d $HOME/bin/android-sdk-linux_86/tools ]; then
     export PATH=${PATH}:$HOME/bin/android-sdk-linux_86/tools:$HOME/bin
 fi
 
-
 # System settings
-
 export TERM="xterm-color"
-#export TERM="vt100"
 export DISPLAY=:0.0
 export EDITOR=emacs
 export BROWSER=google-chrome
@@ -25,7 +22,6 @@ export GREP_OPTIONS='--color=auto'
 export GREP_COLOR='1;31'
 export HISTSIZE=10000
 export SAVEHIST=10000
-
 
 # shopt settings
 # needs a check for shopt
@@ -51,16 +47,10 @@ shopt -s checkwinsize
 # Prompt
 export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e[0;33m\]\w\[\033[00m\]\n$ "
 
-# Try this out...
-# PS1="\[\033[G\]$PS1"
-
 # Aliases
-
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
-    alias la='ls -A'
-    alias l='ls -CF'
     alias l='ls -lah' 
     alias la='ls -AF' 
     alias ll='ls -lFh' 
@@ -69,7 +59,6 @@ if [ -x /usr/bin/dircolors ]; then
     alias egrep='egrep --color=auto'
 else
     alias la='ls -A'
-    alias l='ls -CF'
     alias l='ls -lah' 
     alias la='ls -AF' 
     alias ll='ls -lFh' 
@@ -84,25 +73,20 @@ alias recent="ls -lAt | head"
 alias back='cd $OLDPWD'
 alias openports='sudo lsof -i -P | grep -i "listen"'
 
-## Debian/Ubuntu
-alias apt-get='sudo apt-get'
-alias apt-cache='sudo apt-cache'
-alias aptitude='sudo aptitude'
-
-## Redhat/Centos/Fedora
-alias yum='sudo yum'
-alias tree='tree -Ca -I ".git|*.pyc|*.swp"'
-
-
 case $MACHTYPE in
     *redhat*)
-
+        ## Redhat/Centos/Fedora
+        alias yum='sudo yum'
+        alias tree='tree -Ca -I ".git|*.pyc|*.swp"'
     ;;
     *linux*)
-
+        ## Debian/Ubuntu
+        alias apt-get='sudo apt-get'
+        alias apt-cache='sudo apt-cache'
+        alias aptitude='sudo aptitude'
     ;;
     *darwin*)
-	alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
+	    alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
     ;;
     *cygwin*)
 
