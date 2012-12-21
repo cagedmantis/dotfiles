@@ -2,7 +2,7 @@
 # Carlos Amedee
 
 # Paths
-PATH=$PATH:$HOME/bin
+export PATH=$PATH:$HOME/bin
 
 export CLASSPATH=
 
@@ -22,6 +22,7 @@ export GREP_OPTIONS='--color=auto'
 export GREP_COLOR='1;31'
 export HISTSIZE=10000
 export SAVEHIST=10000
+export LC_CTYPE=en_US.UTF-8
 
 # shopt settings
 # needs a check for shopt
@@ -49,7 +50,6 @@ export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e
 
 # Aliases
 if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
     alias l='ls -lah' 
     alias la='ls -AF' 
@@ -64,7 +64,9 @@ else
     alias ll='ls -lFh' 
 fi
 
-alias rdesktop='rdesktop -g 1024x800'
+alias dev='cd ~/Development'
+alias c='clear'
+
 alias ping='ping -c 5'
 alias df='df -h' 
 alias du='du -h -c' 
@@ -73,17 +75,18 @@ alias recent="ls -lAt | head"
 alias back='cd $OLDPWD'
 alias openports='sudo lsof -i -P | grep -i "listen"'
 
+
+##os specific config options
 case $MACHTYPE in
     *redhat*)
-        ## Redhat/Centos/Fedora
         alias yum='sudo yum'
         alias tree='tree -Ca -I ".git|*.pyc|*.swp"'
     ;;
     *linux*)
-        ## Debian/Ubuntu
         alias apt-get='sudo apt-get'
         alias apt-cache='sudo apt-cache'
         alias aptitude='sudo aptitude'
+        alias rdesktop='rdesktop -g 1024x800'
     ;;
     *darwin*)
 	    alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
@@ -94,4 +97,15 @@ case $MACHTYPE in
   *)
     ;;
 esac
+
+# virtualenvwrapper
+if [[ -f /usr/local/bin/virtualenvwrapper.sh ]]; then
+  export WORKON_HOME=~/.virtualenvs
+  [[ ! -d $WORKON_HOME ]] && mkdir $WORKON_HOME
+  source /usr/local/bin/virtualenvwrapper.sh
+fi
+
+### Added by the Heroku Toolbelt
+export PATH="/usr/local/heroku/bin:$PATH"
+
 
