@@ -25,8 +25,6 @@ export SAVEHIST=10000
 export LC_CTYPE=en_US.UTF-8
 
 # shopt settings
-# needs a check for shopt
-
 # append to the history file
 shopt -s histappend
 
@@ -58,7 +56,6 @@ if [ -x /usr/bin/dircolors ]; then
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 else
-    alias la='ls -A'
     alias l='ls -lah' 
     alias la='ls -AF' 
     alias ll='ls -lFh' 
@@ -107,5 +104,4 @@ fi
 
 ### Added by the Heroku Toolbelt
 export PATH="/usr/local/heroku/bin:$PATH"
-
 
