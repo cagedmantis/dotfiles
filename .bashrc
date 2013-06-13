@@ -8,13 +8,12 @@ export CLASSPATH=
 
 export CLOJURE_EXT=$HOME/.clojure
 
-# Android tools
 if [ -d $HOME/bin/android-sdk-linux_86/tools ]; then
     export PATH=${PATH}:$HOME/bin/android-sdk-linux_86/tools:$HOME/bin
 fi
 
 # System settings
-export TERM="xterm-color"
+#export TERM="xterm-color"
 export DISPLAY=:0.0
 export EDITOR=emacs
 export BROWSER=google-chrome
@@ -25,6 +24,8 @@ export SAVEHIST=10000
 export LC_CTYPE=en_US.UTF-8
 
 # shopt settings
+# needs a check for shopt
+
 # append to the history file
 shopt -s histappend
 
@@ -49,6 +50,8 @@ export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e
 # Aliases
 if [ -x /usr/bin/dircolors ]; then
     alias ls='ls --color=auto'
+    alias la='ls -A'
+    alias l='ls -CF'
     alias l='ls -lah' 
     alias la='ls -AF' 
     alias ll='ls -lFh' 
@@ -56,13 +59,14 @@ if [ -x /usr/bin/dircolors ]; then
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 else
-    alias l='ls -lah' 
-    alias la='ls -AF' 
-    alias ll='ls -lFh' 
+    alias la='ls -aAFG'
+    alias l='ls -lhFG'
+    alias ll='ls -alhFG'
 fi
 
 alias dev='cd ~/Development'
 alias c='clear'
+
 
 alias ping='ping -c 5'
 alias df='df -h' 
@@ -72,12 +76,12 @@ alias recent="ls -lAt | head"
 alias back='cd $OLDPWD'
 alias openports='sudo lsof -i -P | grep -i "listen"'
 
-
 ##os specific config options
 case $MACHTYPE in
     *redhat*)
         alias yum='sudo yum'
         alias tree='tree -Ca -I ".git|*.pyc|*.swp"'
+
     ;;
     *linux*)
         alias apt-get='sudo apt-get'
@@ -104,4 +108,5 @@ fi
 
 ### Added by the Heroku Toolbelt
 export PATH="/usr/local/heroku/bin:$PATH"
+
 
