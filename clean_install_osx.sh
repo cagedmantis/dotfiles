@@ -3,3 +3,7 @@
 
 #osx
 brew install aspell --lang=en
+
+brew install mit-scheme
+
+brew install whatmask

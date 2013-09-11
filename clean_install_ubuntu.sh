@@ -39,3 +39,9 @@ sudo apt-get install clang
 
 # Install virtualenv
 sudo pip install virtualenv
+
+# Install mit scheme
+sudo apt-get install mit-scheme
+
+# Network tools
+sudo apt-get install vlan netcat fping tcpdump netmask
