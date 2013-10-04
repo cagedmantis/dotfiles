@@ -2,6 +2,7 @@
 # Carlos Amedee
 
 export PATH=$PATH:$HOME/bin
+export PATH="$PATH:/usr/local/smlnj-110.76/bin"
 
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
