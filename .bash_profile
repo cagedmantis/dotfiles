@@ -4,6 +4,15 @@
 export PATH=$PATH:$HOME/bin
 export PATH="$PATH:/usr/local/smlnj-110.76/bin"
 
+DROPBOX=`which dropbox`
+RUNNING=`$DROPBOX running`
+
+# Grabed this from apg
+if [[ $? -eq 0 ]]
+then
+    $DROPBOX start
+fi
+
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
 fi
