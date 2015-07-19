@@ -5,13 +5,13 @@
 sudo apt-get update
 
 # Install Sun Java 6   
-sudo apt-get install sun-java6-jre sun-java6-plugin sun-java6-jdk
+# sudo apt-get install sun-java6-jre sun-java6-plugin sun-java6-jdk
 
 # Install Git
 sudo apt-get install git-core git-gui git-docInstalls git-core, git-gui, and git-doc
 
 # Install Java
-sudo update-alternatives --config java
+# sudo update-alternatives --config java
 
 # Install Alpine
 sudo apt-get install alpine
@@ -19,7 +19,7 @@ sudo apt-get install alpine
 # Install Haskell
 sudo apt-get install ghc6 ghc6-prof ghc6-doc
 
-# Install #macs
+# Install emacs
 sudo apt-get install emacs
 
 # Install Latex
@@ -45,3 +45,6 @@ sudo apt-get install mit-scheme
 
 # Network tools
 sudo apt-get install vlan netcat fping tcpdump netmask
+
+# Install Go
+sudo apt-get install golang
