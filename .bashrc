@@ -116,4 +116,7 @@ fi
 ### Added by the Heroku Toolbelt
 export PATH="/usr/local/heroku/bin:$PATH"
 
+[[ -s "/home/carlos/.gvm/scripts/gvm" ]] && source "/home/carlos/.gvm/scripts/gvm"
 
+export GOPATH=$HOME/code/go
+export PATH=$PATH:$GOPACH/bin
