@@ -4,20 +4,11 @@
 export PATH=$PATH:$HOME/bin
 export PATH="$PATH:/usr/local/smlnj-110.76/bin"
 
-DROPBOX=`which dropbox`
-RUNNING=`$DROPBOX running`
-
-# Grabed this from apg
-if [[ $? -eq 0 ]]
-then
-    $DROPBOX start
-fi
-
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc
 fi
 
-if [ -f ~/.bash_profile_ps ]; then
+if [ -f ~/.bash_profile_do ]; then
     source ~/.bash_profile_ps
 fi
 
@@ -49,4 +40,4 @@ export PATH=/opt/local/bin:/opt/local/sbin:$PATH
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
 
-fortune | cowsay | lolcat
+fortune | cowsay
