@@ -4,14 +4,8 @@
 # Update system
 sudo apt-get update
 
-# Install Sun Java 6   
-# sudo apt-get install sun-java6-jre sun-java6-plugin sun-java6-jdk
-
 # Install Git
-sudo apt-get install git-core git-gui git-docInstalls git-core, git-gui, and git-doc
-
-# Install Java
-# sudo update-alternatives --config java
+sudo apt-get install git
 
 # Install Alpine
 sudo apt-get install alpine
@@ -47,4 +41,11 @@ sudo apt-get install mit-scheme
 sudo apt-get install vlan netcat fping tcpdump netmask
 
 # Install Go
-sudo apt-get install golang
+export GOFILE=go1.6.3.linux-amd64.tar.gz
+export GOLANG_SHA=cdde5e08530c0579255d6153b08fdb3b8e47caabbe717bc7bcd7561275a87aeb
+
+curl -O https://storage.googleapis.com/golang/$GOFILE /tmp/
+echo "$GOLANG_SHA" > /tmp/$GOFILE.sha256
+shasum -a 256 /tmp/$GOFILE | shasum -c /tmp/$GOFILE.sha256
+sudo tar -C /usr/local -xzf $gofilename
+rm /tmp/$GOFILE /tmp/$GOFILE.sha256
