@@ -11,7 +11,7 @@ sudo apt-get install git
 sudo apt-get install alpine
 
 # Install Haskell
-sudo apt-get install ghc6 ghc6-prof ghc6-doc
+sudo apt-get install ghc
 
 # Install emacs
 sudo apt-get install emacs
@@ -40,12 +40,16 @@ sudo apt-get install mit-scheme
 # Network tools
 sudo apt-get install vlan netcat fping tcpdump netmask
 
+# Tmux
+sudo apt-get install tmux
+
 # Install Go
 export GOFILE=go1.6.3.linux-amd64.tar.gz
 export GOLANG_SHA=cdde5e08530c0579255d6153b08fdb3b8e47caabbe717bc7bcd7561275a87aeb
 
-curl -O https://storage.googleapis.com/golang/$GOFILE /tmp/
+curl -o /tmp/$GOFILE https://storage.googleapis.com/golang/$GOFILE
 echo "$GOLANG_SHA" > /tmp/$GOFILE.sha256
 shasum -a 256 /tmp/$GOFILE | shasum -c /tmp/$GOFILE.sha256
 sudo tar -C /usr/local -xzf $gofilename
 rm /tmp/$GOFILE /tmp/$GOFILE.sha256
+
