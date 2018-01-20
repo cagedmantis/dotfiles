@@ -1,7 +1,0 @@
-#! /bin/bash
-#This does standard PHP syntax checking
-php -f $1 -l
-#This does coding standard checking
-phpcs --standard=PEAR --report=emacs $1
-#Always exit with status code 0 otherwise flymake complains
-exit 0
