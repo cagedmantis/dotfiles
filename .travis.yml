@@ -1,8 +1,16 @@
----
-  sudo: required
-  notifications:
-    email: true
-  services:
-    - docker
-  script:
-    - make test
+language: bash
+
+sudo: false
+
+addons:
+  apt:
+    sources:
+    - debian-sid    # Grab shellcheck from the Debian repo (o_O)
+    packages:
+    - shellcheck
+
+script:
+ - bash -c 'shopt -s globstar; shellcheck **/*.{sh,bash}'
+
+matrix:
+  fast_finish: true
