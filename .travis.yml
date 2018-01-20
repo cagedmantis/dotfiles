@@ -10,7 +10,8 @@ addons:
     - shellcheck
 
 script:
- - bash -c 'shopt -s globstar; shellcheck **/*.{sh,bash}'
+ - shellcheck --version
+ - shellcheck **/.bash*
 
 matrix:
   fast_finish: true
