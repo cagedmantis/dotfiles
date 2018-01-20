@@ -1,36 +1,36 @@
 all: 
 
 bash_checkin:
-	echo " >> Copying bash files from file system to repository."
-	cp -u ~/.bashrc .
-	cp -u ~/.bash_profile .
-	cp -u ~/.bash_prompt .
-	cp -u ~/.bash_path .
-	cp -u ~/.bash_func .
-	cp -u ~/.bash_alias .
-	cp -u ~/.bash_osx .
-	cp -u ~/.bash_linux .
+	@echo " >> Copying bash files from file system to repository."
+	@cp ~/.bashrc .
+	@cp ~/.bash_profile .
+	@cp ~/.bash_prompt .
+	@cp ~/.bash_path .
+	@cp ~/.bash_func .
+	@cp ~/.bash_alias .
+	@cp ~/.bash_osx .
+	@cp ~/.bash_linux .
 
 bash_checkout:
-	echo " >> Copying bash files onto file system."
-	cp -u ./.bashrc ~/
-	cp -u ./.bash_profile ~/
-	cp -u ./.bash_prompt ~/
-	cp -u ./.bash_path ~/
-	cp -u ./.bash_func ~/
-	cp -u ./.bash_alias ~/
-	cp -u ./.bash_osx ~/
-	cp -u ./.bash_linux ~/
+	@echo " >> Copying bash files onto file system."
+	@cp ./.bashrc ~/
+	@cp ./.bash_profile ~/
+	@cp ./.bash_prompt ~/
+	@cp ./.bash_path ~/
+	@cp ./.bash_func ~/
+	@cp ./.bash_alias ~/
+	@cp ./.bash_osx ~/
+	@cp ./.bash_linux ~/
 
 misc_checkin:
-	echo " >> Copying files from file system to repository."
-	cp -u ~/.tmux.conf .
-	cp -u ~/.pinerc .
+	@echo " >> Copying files from file system to repository."
+	@cp ~/.tmux.conf .
+	@cp ~/.pinerc .
 
 misc_checkout:
-	echo " >> Copying files from file system to repository."
-	cp -u ./.tmux.conf ~/
-	cp -u ./.pinerc ~/
+	@echo " >> Copying files from file system to repository."
+	@cp ./.tmux.conf ~/
+	@cp ./.pinerc ~/
 
 checkin: bash_checkin misc_checkin
 
