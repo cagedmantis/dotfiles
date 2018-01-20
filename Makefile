@@ -36,4 +36,7 @@ checkin: bash_checkin misc_checkin
 
 checkout: bash_checkout mist_checkout
 
-.PHONY: all bash_checkin bash_checkout misc_checkin misc_checkout checkin checkout
+check:
+	shellcheck .bash*
+
+.PHONY: all bash_checkin bash_checkout misc_checkin misc_checkout checkin checkout check
