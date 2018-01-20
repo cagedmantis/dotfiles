@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # ~/.bash_profile
 # Carlos Amedee
 
@@ -32,9 +34,15 @@ case $MACHTYPE in
     ;;
     *linux*)
         echo "Linux box"
+		if [ -f ~/.bash_linux ]; then 
+			source ~/.bash_linux 
+		fi
     ;;
     *darwin*)
         echo "OS X box"
+		if [ -f ~/.bash_osx ]; then 
+			source ~/.bash_osx 
+		fi
     ;;
     *cygwin*)
         echo "Windows box"
@@ -52,29 +60,3 @@ export PATH=/opt/local/bin:/opt/local/sbin:$PATH
 if [ -f ~/.git-completion.bash ]; then
   . ~/.git-completion.bash
 fi
-
-# hack for osx agent change in Sierra
-{ eval `ssh-agent`; ssh-add -K; } &>/dev/null
-
-
-# docker
-VM=vmdev
-DOCKER_MACHINE=/usr/local/bin/docker-machine
-
-VBOXMANAGE=/Applications/VirtualBox.app/Contents/MacOS/VBoxManage
-
-BLUE='\033[0;34m'
-GREEN='\033[0;32m'
-NC='\033[0m'
-
-unset DYLD_LIBRARY_PATH
-unset LD_LIBRARY_PATH
-
-VM_STATUS=$($DOCKER_MACHINE status $VM 2>&1)
-if [ "$VM_STATUS" != "Running" ]; then
-	$DOCKER_MACHINE start $VM
-	yes | $DOCKER_MACHINE regenerate-certs $VM
-fi
-
-eval $($DOCKER_MACHINE env --shell=bash $VM)
-

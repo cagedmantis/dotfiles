@@ -1,1 +1,14 @@
 #!/bin/bash
+
+echo "bash_linux"
+
+# do nothing if this is not interactive
+case $- in
+	*i*) ;;
+	*) return;;
+esac
+
+if [ -z "$SSH_AUTH_SOCK" ]; then
+	eval `ssh-agent -s`
+	ssh-add
+fi

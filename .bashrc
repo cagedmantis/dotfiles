@@ -153,8 +153,11 @@ if [[ -f /usr/local/bin/virtualenvwrapper.sh ]]; then
 	source /usr/local/bin/virtualenvwrapper.sh
 fi
 
+
 # direnv
-eval "$(direnv hook bash)"
+if [ -x "$(command -v direnv)" ]; then
+	eval "$(direnv hook bash)"
+fi
 
 #============
 # Functions
@@ -165,15 +168,6 @@ gitBranchPush() {
   git push -u origin $1
 }
 alias gbp=gitBranchPush
-
-#============
-# Docker
-#============
-export VAGRANT_DEFAULT_PROVIDER=vmware_fusion
-
-#docker
-echo ">>> Setting docker machine to vmdev"
-eval "$(docker-machine env vmdev)"
 
 #=============
 # Google Cloud

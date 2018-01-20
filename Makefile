@@ -10,6 +10,7 @@ bash_checkin:
 	@cp ~/.bash_alias .
 	@cp ~/.bash_osx .
 	@cp ~/.bash_linux .
+	@cp ~/.bash_logout .
 
 bash_checkout:
 	@echo " >> Copying bash files onto file system."
@@ -21,6 +22,7 @@ bash_checkout:
 	@cp ./.bash_alias ~/
 	@cp ./.bash_osx ~/
 	@cp ./.bash_linux ~/
+	@cp ./.bash_logout ~/
 
 misc_checkin:
 	@echo " >> Copying files from file system to repository."
@@ -34,7 +36,7 @@ misc_checkout:
 
 checkin: bash_checkin misc_checkin
 
-checkout: bash_checkout mist_checkout
+checkout: bash_checkout misc_checkout
 
 check:
 	shellcheck .bash*
