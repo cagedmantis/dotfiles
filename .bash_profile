@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # ~/.bash_profile
 # Carlos Amedee
 
@@ -14,15 +16,15 @@ export PATH="$PATH:/anaconda/bin"
 export GOPATH=$HOME/code/go
 
 if [ -f ~/.bashrc ]; then
-    source ~/.bashrc
+    source "$HOME/.bashrc"
 fi
 
 if [ -f ~/.bash_profile_ps ]; then
-    source ~/.bash_profile_ps
+    source "$HOME/.bash_profile_ps"
 fi
 
 if [ -f ~/.bash_profile_do ]; then
-    source ~/.bash_profile_do
+    source "$HOME/.bash_profile_do"
 fi
 
 # set some OS specific definitions
