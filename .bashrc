@@ -30,8 +30,6 @@ export PATH="$PATH:/usr/local/heroku/bin"
 # mysql client
 export PATH=$PATH:/Applications/MySQLWorkbench.app/Contents/MacOS
 
-# rust
-export PATH="$HOME/.cargo/bin:$PATH"
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
@@ -162,10 +160,6 @@ if [ -x "$(command -v direnv)" ]; then
 	eval "$(direnv hook bash)"
 fi
 
-# kubectl bash completion
-source <(kubectl completion bash)
-
-
 #============
 # Functions
 #============
@@ -190,8 +184,18 @@ fi
 #=============
 # Kubernetes
 #=============
-export KUBECONFIG=/Users/carlos/kubestuff/admin.conf
+export KUBECONFIG="$HOME/kubestuff/admin.conf"
+
+# kubectl bash completion
+if [ -x "$(command -v kubectl)" ]; then
+	source <(kubectl completion bash)
+fi
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+#=======
+# Rust
+#=======
+source "$HOME/.cargo/env"
