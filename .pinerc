@@ -16,17 +16,17 @@
 personal-name=Carlos Amedee
 
 # Sets domain part of From: and local addresses in outgoing mail.
-user-domain=amedee.net
+user-domain=digitalocean.com
 
 # List of SMTP servers for sending mail. If blank: Unix Alpine uses sendmail.
-smtp-server=mail.amedee.net/submit/tls/novalidate-cert/user="carlos@amedee.net"
+smtp-server=smtp.gmail.com:587/tls/user=camedee@digitalocean.com
 
 # NNTP server for posting news. Also sets news-collections for news reading.
 nntp-server=
 
 # Path of (local or remote) INBOX, e.g. ={mail.somewhere.edu}inbox
 # Normal Unix default is the local INBOX (usually /usr/spool/mail/$USER).
-inbox-path={mail.amedee.net/ssl/novalidate-cert/user="carlos@amedee.net"}inbox
+inbox-path={imap.gmail.com:993/ssl/novalidate-cert/user="camedee@digitalocean.com"}INBOX
 
 # List of folder pairs; the first indicates a folder to archive, and the
 # second indicates the folder read messages in the first should
@@ -63,7 +63,7 @@ trash-folder=
 
 # Contains the actual signature contents as opposed to the signature filename.
 # If defined, this overrides the signature-file. Default is undefined.
-literal-signature=\n\nCarlos Amedee\nEmail: carlos@amedee.net\nwww.amedee.net\n
+literal-signature=\n\nCarlos Amedee\nEmail: camedee@digitalocean.com\nwww.digitalocean.com\n
 
 # Over-rides default path for signature file. Default is ~/.signature
 signature-file=
@@ -88,10 +88,10 @@ feature-list=warn-if-blank-subject,
 initial-keystroke-list=
 
 # Only show these headers (by default) when composing messages
-default-composer-hdrs=""
+default-composer-hdrs=
 
 # Add these customized headers (and possible default values) when composing
-customized-hdrs=From: Carlos Amedee <carlos@amedee.net>
+customized-hdrs=From: Carlos Amedee <camedee@digitalocean.com>
 
 # When viewing messages, include this list of headers
 viewer-hdrs=
@@ -186,7 +186,7 @@ unknown-character-set=
 editor=
 
 # Specifies the program invoked by ^T in the Composer.
-speller=
+speller=aspell -c
 
 # Specifies the column of the screen where the composer should wrap.
 composer-wrap-column=
@@ -223,7 +223,7 @@ display-filters=
 sending-filters=
 
 # A list of alternate addresses the user is known by
-alt-addresses=carlos@amedee.net
+alt-addresses=camedee@digitalocean.com
 
 # A list of keywords for use in categorizing messages
 keywords=
@@ -259,8 +259,13 @@ status-message-delay=
 # Number of times per-second to update busy cue messages
 busy-cue-rate=
 
+# UNIX ONLY (except MAC OSX): When an attachment is opened, this variable controls the number
+#of seconds to wait between checks if the user has ended viewing the attachment.
+#minimun value: 60 seconds, maximum value: 600 seconds (10 minutes). Default: 60 seconds
+mailcap-check-interval=
+
 # The approximate number of seconds between checks for new mail
-mail-check-interval=
+mail-check-interval=110
 
 # The approximate number of seconds between checks for new mail in folders
 # other than the current folder and inbox.
@@ -315,6 +320,9 @@ mimetype-search-path=
 # List of programs to open Internet URLs (e.g. http or ftp references).
 url-viewers=
 
+# List of directories that are preferred locations to save or export attachments.
+default-directories=
+
 # The maximum number of non-stayopen remote connections that Alpine will use
 max-remote-connections=
 
@@ -354,7 +362,7 @@ incoming-folders=
 # List of directories where saved-message folders may be. First one is
 # the default for Saves. Example: Main {host1}mail/[], Desktop mail\[]
 # Syntax: optnl-label {optnl-imap-hostname}optnl-directory-path[]
-folder-collections=folders {mail.amedee.net/ssl/novalidate-cert}INBOX.[]
+folder-collections="camedee@digitalocean.com" {imap.gmail.com:993/ssl/user=camedee@digitalocean.com}[]
 
 # List, only needed if nntp-server not set, or news is on a different host
 # than used for NNTP posting. Examples: News *[] or News *{host3/nntp}[]
@@ -372,10 +380,10 @@ address-book=
 global-address-book=
 
 # Set by Alpine; controls beginning-of-month sent-mail pruning.
-last-time-prune-questioned=110.5
+last-time-prune-questioned=118.3
 
 # Set by Alpine; controls display of "new version" message.
-last-version-used=6.00
+last-version-used=6.21
 
 # This names the path to an alternative program, and any necessary arguments,
 # to be used in posting mail messages.  Example:
@@ -518,6 +526,12 @@ title-foreground-color=
 title-background-color=
 title-closed-foreground-color=
 title-closed-background-color=
+folder-foreground-color=
+folder-background-color=
+directory-foreground-color=
+directory-background-color=
+folder-list-text-foreground-color=
+folder-list-text-background-color=
 status-foreground-color=
 status-background-color=
 keylabel-foreground-color=
@@ -570,6 +584,9 @@ index-from-foreground-color=
 index-from-background-color=
 index-opening-foreground-color=
 index-opening-background-color=
+
+# Colors in which tokens will be displayed in the index screen
+index-token-colors=
 
 # When viewing messages, these are the header colors
 viewer-hdr-colors=

@@ -11,7 +11,6 @@ export PATH="$PATH:$HOME/bin"
 export PATH="$PATH:$HOME/code/go/bin"
 export PATH="$PATH:/usr/local/Cellar/ruby/1.9.3-p194/bin"
 export PATH="$PATH:/anaconda/bin"
-export PATH="$PATH:$HOME/.cargo/bin"
 
 # Set Gopath
 export GOPATH=$HOME/code/go
