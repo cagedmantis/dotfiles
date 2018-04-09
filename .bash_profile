@@ -3,8 +3,6 @@
 # ~/.bash_profile
 # Carlos Amedee
 
-echo "bash_profile"
-
 # Set Path
 export PATH="$PATH:/usr/local/sbin"
 export PATH="$PATH:$HOME/bin"
@@ -30,22 +28,22 @@ fi
 # set some OS specific definitions
 case $MACHTYPE in
     *redhat*)
-        echo "Rehat box"
+        #echo "Redhat box"
     ;;
     *linux*)
-        echo "Linux box"
+        #echo "Linux box"
 		if [ -f ~/.bash_linux ]; then 
 			source ~/.bash_linux 
 		fi
     ;;
     *darwin*)
-        echo "OS X box"
+        #echo "OS X box"
 		if [ -f ~/.bash_osx ]; then 
 			source ~/.bash_osx 
 		fi
     ;;
     *cygwin*)
-        echo "Windows box"
+        #echo "Windows box"
     ;;
     *)
     ;;

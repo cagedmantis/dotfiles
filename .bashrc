@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "bashrc"
-
 # do nothing if this is not interactive
 case $- in
 	*i*) ;;
