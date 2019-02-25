@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "bashrc"
-
 # do nothing if this is not interactive
 case $- in
 	*i*) ;;
@@ -33,6 +31,8 @@ export PATH="$PATH:/usr/local/heroku/bin"
 # mysql client
 export PATH=$PATH:/Applications/MySQLWorkbench.app/Contents/MacOS
 
+# rust
+export PATH="$HOME/.cargo/bin:$PATH"
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
@@ -46,10 +46,11 @@ export EDITOR="emacsclient -t"
 export BROWSER=google-chrome
 export GREP_OPTIONS='--color=auto'
 export GREP_COLOR='1;31'
-export HISTSIZE=10000
+export HISTSIZE=50000
+export HISTFILESIZE=50000
 export SAVEHIST=10000
 export LC_CTYPE=en_US.UTF-8
-export HISTCONTROL=ignorespace
+export HISTCONTROL=ignorespace:ignoredups:erasedups
 
 # shopt settings
 # needs a check for shopt
@@ -77,6 +78,9 @@ function parse_git_branch {
     ref=$(git symbolic-ref HEAD 2> /dev/null) || return
     echo "("${ref#refs/heads/}")"
 }
+
+# experimental
+# export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"
 
 # Prompt
 export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e[0;33m\]\w\[\033[00m\] \[\033[0;31m\]\$(parse_git_branch)\[\033[0;37m\]\n$ "
@@ -168,6 +172,10 @@ if [ -x "$(command -v direnv)" ]; then
 	eval "$(direnv hook bash)"
 fi
 
+# kubectl bash completion
+source <(kubectl completion bash)
+
+
 #============
 # Functions
 #============
@@ -192,18 +200,8 @@ fi
 #=============
 # Kubernetes
 #=============
-export KUBECONFIG="$HOME/kubestuff/admin.conf"
-
-# kubectl bash completion
-if [ -x "$(command -v kubectl)" ]; then
-	source <(kubectl completion bash)
-fi
+export KUBECONFIG=/Users/carlos/kubestuff/admin.conf
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-#=======
-# Rust
-#=======
-source "$HOME/.cargo/env"

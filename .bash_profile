@@ -3,15 +3,12 @@
 # ~/.bash_profile
 # Carlos Amedee
 
-echo "bash_profile"
-
 # Set Path
 export PATH="$PATH:/usr/local/sbin"
 export PATH="$PATH:$HOME/bin"
 export PATH="$PATH:$HOME/code/go/bin"
 export PATH="$PATH:/usr/local/Cellar/ruby/1.9.3-p194/bin"
 export PATH="$PATH:/anaconda/bin"
-export PATH="$PATH:$HOME/.cargo/bin"
 
 # Set Gopath
 export GOPATH=$HOME/code/go
@@ -35,7 +32,7 @@ fi
 # set some OS specific definitions
 case $MACHTYPE in
     *redhat*)
-        echo "Rehat box"
+        #echo "Redhat box"
     ;;
     *linux*)
         echo "Linux box"
@@ -50,7 +47,7 @@ case $MACHTYPE in
 		fi
     ;;
     *cygwin*)
-        echo "Windows box"
+        #echo "Windows box"
     ;;
     *)
     ;;
