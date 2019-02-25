@@ -28,6 +28,10 @@ if [ -f ~/.bash_profile_do ]; then
     source "$HOME/.bash_profile_do"
 fi
 
+if [ -f ~/.bash_profile_personal ]; then
+    source "$HOME/.bash_profile_personal"
+fi
+
 # set some OS specific definitions
 case $MACHTYPE in
     *redhat*)
@@ -35,14 +39,14 @@ case $MACHTYPE in
     ;;
     *linux*)
         echo "Linux box"
-		if [ -f ~/.bash_linux ]; then 
-			source ~/.bash_linux 
+		if [ -f ~/.bash_linux ]; then
+			source ~/.bash_linux
 		fi
     ;;
     *darwin*)
         echo "OS X box"
-		if [ -f ~/.bash_osx ]; then 
-			source ~/.bash_osx 
+		if [ -f ~/.bash_osx ]; then
+			source ~/.bash_osx
 		fi
     ;;
     *cygwin*)

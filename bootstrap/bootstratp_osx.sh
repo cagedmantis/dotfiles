@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 # Install OS X essentials
 
 #brew
@@ -26,4 +27,3 @@ brew install readline
 
 #gem
 sudo gem install lolcat
-

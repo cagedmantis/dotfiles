@@ -14,6 +14,9 @@ echo "bashrc interactive"
 # Paths
 # ========
 
+export PATH=$PATH:/usr/local/go/bin
+export GOPATH=/home/carlos/code/go
+
 if [ -d "$HOME/bin/google-cloud-sdk/bin" ]; then
 	export PATH=$PATH:$HOME/bin/google-cloud-sdk/bin;
 fi
@@ -78,15 +81,20 @@ function parse_git_branch {
 # Prompt
 export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e[0;33m\]\w\[\033[00m\] \[\033[0;31m\]\$(parse_git_branch)\[\033[0;37m\]\n$ "
 
+if [ -z "$SSH_AUTH_SOCK" ]; then
+  eval $(ssh-agent -s)
+  ssh-add
+fi
+
 # Aliases
 if [ -x /usr/bin/dircolors ]; then
     alias ls='ls --color=auto'
     alias la='ls -A'
     alias l='ls -CF'
-    alias l='ls -lah' 
-    alias la='ls -AF' 
-    alias ll='ls -lFh' 
-    alias grep='grep --color=auto' 
+    alias l='ls -lah'
+    alias la='ls -AF'
+    alias ll='ls -lFh'
+    alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 else
@@ -99,8 +107,8 @@ alias tmux='tmux -2'
 alias dev='cd ~/Development'
 alias c='clear'
 alias ping='ping -c 5'
-alias df='df -h' 
-alias du='du -h -c' 
+alias df='df -h'
+alias du='du -h -c'
 alias screen='TERM=screen screen'
 alias recent="ls -lAt | head"
 alias back='cd $OLDPWD'
@@ -173,11 +181,11 @@ alias gbp=gitBranchPush
 #=============
 # Google Cloud
 #=============
-if [ -f "$HOME//bin/google-cloud-sdk/completion.bash.inc" ]; then 
+if [ -f "$HOME//bin/google-cloud-sdk/completion.bash.inc" ]; then
 	source /Users/carlos/bin/google-cloud-sdk/completion.bash.inc;
 fi
 
-if [ -f "$HOME//bin/google-cloud-sdk/path.bash.inc" ]; then 
+if [ -f "$HOME//bin/google-cloud-sdk/path.bash.inc" ]; then
 	source /Users/carlos/bin/google-cloud-sdk/path.bash.inc;
 fi
 
