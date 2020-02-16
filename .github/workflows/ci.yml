@@ -3,11 +3,9 @@ name: CI
 on: [push]
 
 jobs:
-  build:
-
+  lint:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: shellcheck
-      uses: ludeeus/action-shellcheck@0.1.0
+      - uses: actions/checkout@v2
+      - name: Lint check
+        uses: azohra/shell-linter@v0.2.0
