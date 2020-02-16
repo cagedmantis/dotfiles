@@ -13,7 +13,6 @@ echo "bashrc interactive"
 # ========
 
 export PATH=$PATH:/usr/local/go/bin
-export GOPATH=/home/carlos/code/go
 
 if [ -d "$HOME/bin/google-cloud-sdk/bin" ]; then
 	export PATH=$PATH:$HOME/bin/google-cloud-sdk/bin;
@@ -205,3 +204,53 @@ export KUBECONFIG=/Users/carlos/kubestuff/admin.conf
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+
+
+
+### TODO: Migrated from .bash_profile
+if [ -f ~/.bash_profile_ps ]; then
+    source "$HOME/.bash_profile_ps"
+fi
+
+if [ -f ~/.bash_profile_do ]; then
+    source "$HOME/.bash_profile_do"
+fi
+
+if [ -f ~/.bash_profile_personal ]; then
+    source "$HOME/.bash_profile_personal"
+fi
+
+# set some OS specific definitions
+case $MACHTYPE in
+    *redhat*)
+        #echo "Redhat box"
+    ;;
+    *linux*)
+        echo "Linux box"
+		if [ -f ~/.bash_linux ]; then
+			source ~/.bash_linux
+		fi
+    ;;
+    *darwin*)
+        echo "OS X box"
+		if [ -f ~/.bash_osx ]; then
+			source ~/.bash_osx
+		fi
+    ;;
+    *cygwin*)
+        #echo "Windows box"
+    ;;
+    *)
+    ;;
+esac
+
+# MacPorts Installer addition on 2012-08-09_at_23:34:39: adding an appropriate PATH variable for use with MacPorts.
+export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+# Finished adapting your PATH environment variable for use with MacPorts.
+
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+
+if [ -f ~/.git-completion.bash ]; then
+  . ~/.git-completion.bash
+fi
