@@ -6,13 +6,9 @@ case $- in
 	*) return;;
 esac
 
-echo "bashrc interactive"
-
 # ========
 # Paths
 # ========
-
-export PATH=$PATH:/usr/local/go/bin
 
 if [ -d "$HOME/bin/google-cloud-sdk/bin" ]; then
 	export PATH=$PATH:$HOME/bin/google-cloud-sdk/bin;
@@ -22,21 +18,12 @@ if [ -d "$HOME/bin/android-sdk-linux_86/tools" ]; then
     export PATH=${PATH}:$HOME/bin/android-sdk-linux_86/tools:$HOME/bin
 fi
 
-### Added by the Heroku Toolbelt
-export PATH="$PATH:/usr/local/heroku/bin"
-
-[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-
-# mysql client
-export PATH=$PATH:/Applications/MySQLWorkbench.app/Contents/MacOS
+if [ -f /usr/local/etc/bash_completion ]; then
+	source /usr/local/etc/bash_completion
+fi
 
 # rust
-export PATH="$HOME/.cargo/bin:$PATH"
-
-# set a fancy prompt (non-color, unless we know we "want" color)
-case "$TERM" in
-	xterm-color) color_prompt=yes;;
-esac
+[ -d "${HOME}/.cargo/bin" ] && export PATH="${PATH}:${HOME}/.cargo/bin"
 
 # System settings
 export TERM="xterm-256color"
@@ -75,17 +62,14 @@ shopt -s checkwinsize
 # print current git branch
 function parse_git_branch {
     ref=$(git symbolic-ref HEAD 2> /dev/null) || return
-    echo "("${ref#refs/heads/}")"
+    echo "(${ref#refs/heads/})"
 }
-
-# experimental
-# export PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a; history -c; history -r"
 
 # Prompt
 export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e[0;33m\]\w\[\033[00m\] \[\033[0;31m\]\$(parse_git_branch)\[\033[0;37m\]\n$ "
 
 if [ -z "$SSH_AUTH_SOCK" ]; then
-  eval $(ssh-agent -s)
+  eval "$(ssh-agent -s)"
   ssh-add
 fi
 
@@ -165,23 +149,23 @@ if [[ -f /usr/local/bin/virtualenvwrapper.sh ]]; then
 	source /usr/local/bin/virtualenvwrapper.sh
 fi
 
-
 # direnv
 if [ -x "$(command -v direnv)" ]; then
 	eval "$(direnv hook bash)"
 fi
 
 # kubectl bash completion
-source <(kubectl completion bash)
-
+if [ -x kubectl ]; then
+	source <(kubectl completion bash)
+fi
 
 #============
 # Functions
 #============
 
 gitBranchPush() {
-  git checkout -b $1
-  git push -u origin $1
+  git checkout -b "${1}"
+  git push -u origin "${1}"
 }
 alias gbp=gitBranchPush
 
@@ -207,7 +191,6 @@ export NVM_DIR="$HOME/.nvm"
 
 
 
-
 ### TODO: Migrated from .bash_profile
 if [ -f ~/.bash_profile_ps ]; then
     source "$HOME/.bash_profile_ps"
@@ -227,13 +210,11 @@ case $MACHTYPE in
         #echo "Redhat box"
     ;;
     *linux*)
-        echo "Linux box"
 		if [ -f ~/.bash_linux ]; then
 			source ~/.bash_linux
 		fi
     ;;
     *darwin*)
-        echo "OS X box"
 		if [ -f ~/.bash_osx ]; then
 			source ~/.bash_osx
 		fi
