@@ -17,3 +17,5 @@ TAGS
 .ipython/IPython_crash_report.txt
 \#*\#
 *.o
+.bash_history
+.zsh_history
