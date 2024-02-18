@@ -1,15 +1,13 @@
-## Dotfiles
-
-[![Travis CI](https://travis-ci.org/jessfraz/dotfiles.svg?branch=master)](https://travis-ci.org/cagedmantis/dotfiles)
-
+# Dotfiles
 
 ## Overview
 
 My personal preferences for environmental variables. Nothing special.
 
-## Contact
+## Dependencies
 
-Carlos Amedee ([cagedmantis](https://twitter.com/cagedmantis))
+* Git
+* GNU Stow
 
 ## License
 
