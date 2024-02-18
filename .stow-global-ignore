@@ -1,3 +1,8 @@
 ^/Makefile
-.bash_history
-.zsh_history
+Makefile
+\.bash_history
+\.zsh_history
+\.DS_Store
+^/README.*
+\.git
+\.gitignore
