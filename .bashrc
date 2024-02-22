@@ -10,6 +10,10 @@ esac
 # Paths
 # ========
 
+if [ -d "/usr/local/go/bin" ]; then
+	export PATH=$PATH:/usr/local/go/bin
+fi
+
 if [ -d "$HOME/bin/google-cloud-sdk/bin" ]; then
 	export PATH=$PATH:$HOME/bin/google-cloud-sdk/bin;
 fi
