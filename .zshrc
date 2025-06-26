@@ -1,15 +1,64 @@
 #!/usr/bin/env zsh
 
-# This entire file is a wip
+# ====================
+# HISTORY CONFIGURATION
+# ====================
 
-# Aliases
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_FIND_NO_DUPS
+setopt HIST_SAVE_NO_DUPS
+setopt SHARE_HISTORY
+
+# ====================
+# AUTO-COMPLETION
+# ====================
+
+# Enable auto-completion
+autoload -Uz compinit
+compinit
+
+# Case insensitive completion
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+zstyle ':completion:*' menu select
+
+# ====================
+# DIRECTORY NAVIGATION
+# ====================
+
+# Auto-cd when typing directory name
+setopt AUTO_CD
+
+# Directory stack options
+setopt AUTO_PUSHD
+setopt PUSHD_IGNORE_DUPS
+setopt PUSHD_SILENT
+
+# ====================
+# ALIASES
+# ====================
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
+# Modern ls alternatives  
 alias la='ls -aAFG'
 alias l='ls -lhFG'
 alias ll='ls -alhFG'
+
+# Safety aliases
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# Directory shortcuts
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
 
 # TODO review
 alias tmux='tmux -2'
