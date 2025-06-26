@@ -19,3 +19,6 @@ TAGS
 *.o
 .bash_history
 .zsh_history
+
+# Claude Code directory
+.claude/
