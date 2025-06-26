@@ -16,7 +16,9 @@ if [ -d /usr/local/go/bin ]; then
 	export PATH="${PATH}:/usr/local/go/bin"
 fi
 
-export EDITOR=/opt/homebrew/bin/emacs
-
 # Rust
-. "$HOME/.cargo/env"
+if [ -f $HOME/.cargo/env ]; then
+	. "$HOME/.cargo/env"
+fi
+
+export EDITOR=/opt/homebrew/bin/emacs

@@ -45,5 +45,26 @@ case $OSTYPE in
 		;;
 esac
 
+# Git prompt function
+git_prompt_info() {
+    if git rev-parse --git-dir > /dev/null 2>&1; then
+        local branch=$(git branch --show-current 2>/dev/null)
+        local git_status=""
+        
+        # Check for uncommitted changes
+        if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+            git_status="*"
+        fi
+        
+        # Check for untracked files
+        if [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
+            git_status="${git_status}+"
+        fi
+        
+        echo " %F{12}(%f%F{14}${branch}${git_status}%f%F{12})%f"
+    fi
+}
+
 NEWLINE=$'\n'
-PROMPT="%F{10}%n%f%F{11}@%f%F{10}%m%f%F{10}: %f%F{33}%~%f%F{10}${NEWLINE}> %f"
+setopt PROMPT_SUBST
+PROMPT="%F{10}%n%f%F{11}@%f%F{10}%m%f%F{10}: %f%F{33}%~%f\$(git_prompt_info)%F{10}${NEWLINE}> %f"
