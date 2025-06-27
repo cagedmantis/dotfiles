@@ -14,6 +14,30 @@ esac
 # HISTORY CONFIGURATION
 # ====================
 
+if [ -d "$HOME/bin/google-cloud-sdk/bin" ]; then
+	export PATH=$PATH:$HOME/bin/google-cloud-sdk/bin;
+fi
+
+if [ -d "$HOME/bin/android-sdk-linux_86/tools" ]; then
+    export PATH=${PATH}:$HOME/bin/android-sdk-linux_86/tools:$HOME/bin
+fi
+
+if [ -f /usr/local/etc/bash_completion ]; then
+	source /usr/local/etc/bash_completion
+fi
+
+# rust
+[ -d "${HOME}/.cargo/bin" ] && export PATH="${PATH}:${HOME}/.cargo/bin"
+[ -d "${HOME}/.cargo/bin" ] && source "$HOME/.cargo/env"
+
+# System settings
+export TERM="xterm-256color"
+export DISPLAY=:0.0
+export EDITOR="emacsclient -t"
+export BROWSER=google-chrome
+export GREP_OPTIONS='--color=auto'
+export GREP_COLOR='1;31'
+>>>>>>> Stashed changes
 export HISTSIZE=50000
 export HISTFILESIZE=50000
 export HISTCONTROL=ignorespace:ignoredups:erasedups
@@ -159,7 +183,7 @@ case $MACHTYPE in
         alias apt-cache='sudo apt-cache'
         alias aptitude='sudo aptitude'
         alias rdesktop='rdesktop -g 1024x800'
-        
+
         # Source Linux-specific config
         if [ -f ~/.bash_linux ]; then
             source ~/.bash_linux
@@ -170,16 +194,16 @@ case $MACHTYPE in
         alias lockscreen='/System/Library/CoreServices/"Menu Extras"/User.menu/Contents/Resources/CGSession -suspend'
         alias vboxmanage='/Applications/VirtualBox.app/Contents/MacOS/VBoxManage'
         alias vmrun="/Applications/VMware\ Fusion.app/Contents/Library/vmrun"
-        
+
         # SSH agent for macOS
         ssh-add -A &> /dev/null
-        
+
         # VMware desktop shortcuts
         export DESKTOP="/Users/carlos/Documents/Virtual Machines.localized/do-desktop.vmwarevm/do-desktop.vmx"
         alias desktop_start="vmrun start \"$DESKTOP\" nogui"
         alias desktop_stop="vmrun stop \"$DESKTOP\" nogui"
         alias desktop_ssh="ssh carlos@172.16.81.100"
-        
+
         # Source macOS-specific config
         if [ -f ~/.bash_osx ]; then
             source ~/.bash_osx
@@ -257,4 +281,36 @@ fi
 
 if [ -f ~/.bash_profile_personal ]; then
     source "$HOME/.bash_profile_personal"
+fi
+
+# set some OS specific definitions
+case $MACHTYPE in
+    *redhat*)
+        #echo "Redhat box"
+    ;;
+    *linux*)
+		if [ -f ~/.bash_linux ]; then
+			source ~/.bash_linux
+		fi
+    ;;
+    *darwin*)
+		if [ -f ~/.bash_osx ]; then
+			source ~/.bash_osx
+		fi
+    ;;
+    *cygwin*)
+        #echo "Windows box"
+    ;;
+    *)
+    ;;
+esac
+
+# MacPorts Installer addition on 2012-08-09_at_23:34:39: adding an appropriate PATH variable for use with MacPorts.
+export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+# Finished adapting your PATH environment variable for use with MacPorts.
+
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+
+if [ -f ~/.git-completion.bash ]; then
+  . ~/.git-completion.bash
 fi
