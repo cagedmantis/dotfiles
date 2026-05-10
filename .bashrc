@@ -71,7 +71,7 @@ parse_git_branch() {
 }
 
 # Colorful prompt with git info
-export PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\e[0;33m\]\w\[\033[00m\] \[\033[0;31m\]\$(parse_git_branch)\[\033[0;37m\]\n$ "
+export PS1="\[\033[01;32m\]\u\[\033[01;33m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\033[01;36m\]\w\[\033[00m\] \[\033[01;34m\]\$(parse_git_branch)\[\033[00m\]\[\033[01;32m\]\n$ \[\033[00m\]"
 
 # ====================
 # SSH AGENT
@@ -86,25 +86,30 @@ fi
 # ALIASES
 # ====================
 
+# ls directory colors: bold cyan on black (macOS + Linux)
+export LSCOLORS=GxFxCxDxBxegedabagacad
+export LS_COLORS='di=1;36:ln=1;35:so=1;32:pi=1;33:ex=1;31'
+
 # Core utilities with colors
 if [ -x /usr/bin/dircolors ]; then
     # Linux
     alias ls='ls --color=auto'
+    alias la='ls -aAF --color=auto'
+    alias l='ls -lhF --color=auto'
+    alias ll='ls -alhF --color=auto'
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 else
     # macOS
     alias ls='ls -G'
+    alias la='ls -aAFG'
+    alias l='ls -lhFG'
+    alias ll='ls -alhFG'
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 fi
-
-# File listing variations
-alias la='ls -aAFG'
-alias l='ls -lhFG'
-alias ll='ls -alhFG'
 alias recent="ls -lAt | head"
 
 # Safety aliases

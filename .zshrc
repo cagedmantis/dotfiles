@@ -6,8 +6,10 @@
 
 # History configuration
 HISTFILE=~/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
+HISTSIZE=100000
+SAVEHIST=100000
+setopt EXTENDED_HISTORY
+setopt HIST_EXPIRE_DUPS_FIRST
 setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_ALL_DUPS
 setopt HIST_IGNORE_SPACE
@@ -29,7 +31,12 @@ setopt PROMPT_SUBST
 # ====================
 
 autoload -Uz compinit
-compinit
+# Regenerate the dump only once per day; use cached version otherwise
+if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+    compinit
+else
+    compinit -C
+fi
 
 # Case insensitive completion with menu selection
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
@@ -44,28 +51,32 @@ git_prompt_info() {
     if git rev-parse --git-dir > /dev/null 2>&1; then
         local branch=$(git branch --show-current 2>/dev/null)
         local git_status=""
-        
+
         # Check for uncommitted changes
         if ! git diff-index --quiet HEAD -- 2>/dev/null; then
             git_status="*"
         fi
-        
+
         # Check for untracked files
         if [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
             git_status="${git_status}+"
         fi
-        
+
         echo " %F{12}(%f%F{14}${branch}${git_status}%f%F{12})%f"
     fi
 }
 
 # Set prompt
 NEWLINE=$'\n'
-PROMPT="%F{10}%n%f%F{11}@%f%F{10}%m%f%F{10}: %f%F{33}%~%f\$(git_prompt_info)%F{10}${NEWLINE}> %f"
+PROMPT="%F{10}%n%f%F{11}@%f%F{10}%m%f%F{10}: %f%F{51}%~%f\$(git_prompt_info)%F{10}${NEWLINE}> %f"
 
 # ====================
 # ALIASES
 # ====================
+
+# ls directory colors: bold cyan on black (macOS + Linux)
+export LSCOLORS=GxFxCxDxBxegedabagacad
+export LS_COLORS='di=1;36:ln=1;35:so=1;32:pi=1;33:ex=1;31'
 
 # Core utilities with colors
 alias ls='ls -G'  # macOS color support
@@ -127,3 +138,5 @@ case $OSTYPE in
         # Default settings for other systems
         ;;
 esac
+
+export PATH="$HOME/.local/bin:$PATH"
