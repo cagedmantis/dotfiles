@@ -66,6 +66,14 @@ NEWLINE=$'\n'
 PROMPT="%F{10}%n%f%F{11}@%f%F{10}%m%f%F{10}: %f%F{51}%~%f\$(git_prompt_info)%F{10}${NEWLINE}> %f"
 
 # ====================
+# ENVIRONMENT
+# ====================
+
+export TERM="xterm-256color"
+export EDITOR="emacsclient -t"
+export BROWSER=google-chrome
+
+# ====================
 # ALIASES
 # ====================
 
@@ -89,11 +97,13 @@ alias recent="ls -lAt | head"
 alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
+alias mkdir='mkdir -p'
 
 # Directory navigation shortcuts
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
+alias back='cd $OLDPWD'
 alias dev='cd ~/Code'
 
 # System utilities
@@ -134,6 +144,7 @@ alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v exten
 
 case $OSTYPE in
     *linux*)
+        export DISPLAY=:0.0
         alias apt-get='sudo apt-get'
         alias apt-cache='sudo apt-cache'
         alias aptitude='sudo aptitude'
@@ -141,6 +152,7 @@ case $OSTYPE in
         ;;
     *darwin*)
         alias lockscreen='pmset displaysleepnow'
+        ssh-add -A &> /dev/null
         ;;
     *cygwin*)
         # Cygwin-specific settings can go here
@@ -149,6 +161,19 @@ case $OSTYPE in
         # Default settings for other systems
         ;;
 esac
+
+# ====================
+# FUNCTIONS
+# ====================
+
+gbp() {
+    git checkout -b "${1}"
+    git push -u origin "${1}"
+}
+
+# ====================
+# EXTERNAL TOOLS
+# ====================
 
 # direnv
 if command -v direnv &> /dev/null; then
@@ -159,7 +184,10 @@ fi
 if [ -f '/Users/carlos/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/carlos/Downloads/google-cloud-sdk/path.zsh.inc'; fi
 if [ -f '/Users/carlos/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/carlos/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
-
 # Docker CLI completions
 fpath=(/Users/carlos/.docker/completions $fpath)
+
+# MacPorts
+export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+
 export PATH="$HOME/.local/bin:$PATH"

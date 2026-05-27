@@ -145,10 +145,11 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 alias back='cd $OLDPWD'
-alias dev='cd ~/Development'
+alias dev='cd ~/Code'
 
 # System utilities
 alias c='clear'
+alias r='reset'
 alias df='df -h'
 alias du='du -h -c'
 alias ping='ping -c 5'
@@ -162,6 +163,22 @@ alias screen='TERM=screen screen'
 # Utility functions
 alias weather='curl http://wttr.in/nyc'
 alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
+
+# Git aliases
+alias g='git'
+alias ga='git add'
+alias gaa='git add -A'
+alias gc='git commit'
+alias gcm='git commit -m'
+alias gco='git checkout'
+alias gd='git diff'
+alias gds='git diff --staged'
+alias gl='git log --oneline'
+alias gp='git push'
+alias gpl='git pull'
+alias gs='git status'
+alias gst='git stash'
+alias gstp='git stash pop'
 
 # Docker shortcuts
 alias docker-create-f='docker-machine create --driver vmwarefusion vmdev'
@@ -190,7 +207,7 @@ case $MACHTYPE in
         ;;
     *darwin*)
         alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
-        alias lockscreen='/System/Library/CoreServices/"Menu Extras"/User.menu/Contents/Resources/CGSession -suspend'
+        alias lockscreen='pmset displaysleepnow'
         alias vboxmanage='/Applications/VirtualBox.app/Contents/MacOS/VBoxManage'
         alias vmrun="/Applications/VMware\ Fusion.app/Contents/Library/vmrun"
 
@@ -284,3 +301,6 @@ fi
 
 # MacPorts
 export PATH=/opt/local/bin:/opt/local/sbin:$PATH
+
+# Local bin
+export PATH="$HOME/.local/bin:$PATH"
