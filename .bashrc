@@ -37,7 +37,6 @@ export EDITOR="emacsclient -t"
 export BROWSER=google-chrome
 export GREP_OPTIONS='--color=auto'
 export GREP_COLOR='1;31'
->>>>>>> Stashed changes
 export HISTSIZE=50000
 export HISTFILESIZE=50000
 export HISTCONTROL=ignorespace:ignoredups:erasedups
@@ -314,3 +313,4 @@ export PATH=/opt/local/bin:/opt/local/sbin:$PATH
 if [ -f ~/.git-completion.bash ]; then
   . ~/.git-completion.bash
 fi
+. "$HOME/.cargo/env"

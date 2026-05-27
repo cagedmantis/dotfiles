@@ -109,6 +109,22 @@ alias du='du -h -c'
 alias ping='ping -c 5'
 alias openports='sudo lsof -i -P | grep -i "listen"'
 
+# Git aliases
+alias g='git'
+alias ga='git add'
+alias gaa='git add .'
+alias gc='git commit'
+alias gcm='git commit -m'
+alias gco='git checkout'
+alias gd='git diff'
+alias gds='git diff --staged'
+alias gl='git log --oneline'
+alias gp='git push'
+alias gpl='git pull'
+alias gs='git status'
+alias gst='git stash'
+alias gstp='git stash pop'
+
 # Application shortcuts
 alias tmux='tmux -2'
 alias ec="emacsclient -t"
@@ -139,4 +155,10 @@ case $OSTYPE in
         ;;
 esac
 
+# Google Cloud SDK
+if [ -f '/Users/carlos/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/carlos/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+if [ -f '/Users/carlos/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/carlos/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+# Docker CLI completions
+fpath=(/Users/carlos/.docker/completions $fpath)
 export PATH="$HOME/.local/bin:$PATH"
