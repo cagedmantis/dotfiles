@@ -6,15 +6,15 @@
 
 # History configuration
 HISTFILE=~/.zsh_history
-HISTSIZE=100000
-SAVEHIST=100000
+HISTSIZE=50000
+SAVEHIST=50000
 setopt EXTENDED_HISTORY
-setopt HIST_EXPIRE_DUPS_FIRST
 setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_ALL_DUPS
 setopt HIST_IGNORE_SPACE
 setopt HIST_FIND_NO_DUPS
 setopt HIST_SAVE_NO_DUPS
+setopt HIST_VERIFY
 setopt SHARE_HISTORY
 
 # Directory navigation
@@ -22,6 +22,10 @@ setopt AUTO_CD
 setopt AUTO_PUSHD
 setopt PUSHD_IGNORE_DUPS
 setopt PUSHD_SILENT
+
+# UX
+setopt CORRECT
+setopt NO_BEEP
 
 # Prompt substitution for git info
 setopt PROMPT_SUBST
@@ -48,22 +52,13 @@ zstyle ':completion:*' menu select
 
 # Git prompt function
 git_prompt_info() {
-    if git rev-parse --git-dir > /dev/null 2>&1; then
-        local branch=$(git branch --show-current 2>/dev/null)
-        local git_status=""
-
-        # Check for uncommitted changes
-        if ! git diff-index --quiet HEAD -- 2>/dev/null; then
-            git_status="*"
-        fi
-
-        # Check for untracked files
-        if [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
-            git_status="${git_status}+"
-        fi
-
-        echo " %F{12}(%f%F{14}${branch}${git_status}%f%F{12})%f"
-    fi
+    git rev-parse --git-dir > /dev/null 2>&1 || return
+    local branch=$(git branch --show-current 2>/dev/null)
+    local markers=""
+    git diff --cached --quiet 2>/dev/null || markers="${markers}+"
+    git diff --quiet 2>/dev/null || markers="${markers}*"
+    [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ] && markers="${markers}?"
+    echo " %F{12}(%f%F{14}${branch}${markers}%f%F{12})%f"
 }
 
 # Set prompt
@@ -112,7 +107,7 @@ alias openports='sudo lsof -i -P | grep -i "listen"'
 # Git aliases
 alias g='git'
 alias ga='git add'
-alias gaa='git add .'
+alias gaa='git add -A'
 alias gc='git commit'
 alias gcm='git commit -m'
 alias gco='git checkout'
@@ -155,9 +150,15 @@ case $OSTYPE in
         ;;
 esac
 
+# direnv
+if command -v direnv &> /dev/null; then
+    eval "$(direnv hook zsh)"
+fi
+
 # Google Cloud SDK
 if [ -f '/Users/carlos/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/carlos/Downloads/google-cloud-sdk/path.zsh.inc'; fi
 if [ -f '/Users/carlos/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/carlos/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
 
 # Docker CLI completions
 fpath=(/Users/carlos/.docker/completions $fpath)
