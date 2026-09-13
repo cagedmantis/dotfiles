@@ -81,7 +81,23 @@ fi
 # PROMPT CONFIGURATION
 # ====================
 
+# Which VCS owns $PWD? Walks the tree in pure shell -- no subprocess, unlike
+# `git rev-parse` / `jj root`. First hit wins, so a colocated repo (both .git
+# and .jj present) reports as jj, which is the one you actually drive.
+_vcs_kind() {
+    local dir="$PWD"
+    _VCS_KIND=""
+    while [ -n "$dir" ]; do
+        if [ -d "$dir/.jj" ]; then _VCS_KIND=jj; return 0; fi
+        # -e, not -d: linked worktrees and submodules use a .git *file*
+        if [ -e "$dir/.git" ]; then _VCS_KIND=git; return 0; fi
+        dir="${dir%/*}"
+    done
+    return 1
+}
+
 # Git branch + status function
+# Markers: + staged, * unstaged, ? untracked
 parse_git_branch() {
     local ref
     ref=$(git symbolic-ref HEAD 2>/dev/null) || return
@@ -93,8 +109,57 @@ parse_git_branch() {
     echo "(${branch}${markers})"
 }
 
+# Jujutsu working-copy info. Renders as (bookmark@changeid<markers>).
+# Markers: * working copy non-empty, ! conflicted, ? divergent.
+#
+# There is no "+" analogue: jj has no index, so the staged/unstaged split does
+# not exist. There is no "?" for untracked either -- jj tracks everything in the
+# workspace -- so "?" is reused for divergent changes.
+#
+# --ignore-working-copy is mandatory in a prompt. Without it, *every* prompt
+# render snapshots the working copy: it writes a "snapshot working copy" entry
+# to the operation log and runs ~5x slower. The cost of the flag is that the
+# emptiness marker reflects the last snapshot, not this instant -- it catches up
+# the next time any jj command runs. Set DOTFILES_JJ_SNAPSHOT=1 to trade that
+# staleness for an always-accurate (but repo-mutating) prompt.
+#
+# One invocation returns both rows we need: the working copy, and the nearest
+# ancestor carrying a bookmark. jj has no "current branch" -- @ is usually a
+# fresh empty commit with no bookmark on it at all.
+parse_jj_info() {
+    command -v jj >/dev/null 2>&1 || return
+    local snapshot="--ignore-working-copy"
+    [ "${DOTFILES_JJ_SNAPSHOT:-0}" = 1 ] && snapshot=""
+    local out tag f2 f3 f4 f5
+    local change="" empty="" conflict="" divergent="" bookmark="" markers=""
+    out=$(jj $snapshot --no-pager log --color=never --no-graph \
+             -r '@ | heads(::@ & bookmarks())' \
+             -T 'if(current_working_copy, "WC\t" ++ change_id.shortest(8) ++ "\t" ++ empty ++ "\t" ++ conflict ++ "\t" ++ divergent, "BM\t" ++ local_bookmarks.map(|b| b.name()).join(",")) ++ "\n"' \
+             2>/dev/null) || return
+    [ -n "$out" ] || return
+    while IFS=$'\t' read -r tag f2 f3 f4 f5; do
+        case "$tag" in
+            WC) change="$f2"; empty="$f3"; conflict="$f4"; divergent="$f5" ;;
+            BM) bookmark="${f2%%,*}" ;;
+        esac
+    done <<< "$out"
+    [ "$empty" = false ]     && markers="${markers}*"
+    [ "$conflict" = true ]   && markers="${markers}!"
+    [ "$divergent" = true ]  && markers="${markers}?"
+    echo "(${bookmark}@${change}${markers})"
+}
+
+# Dispatch to whichever VCS owns the current directory.
+parse_vcs_info() {
+    _vcs_kind || return
+    case "$_VCS_KIND" in
+        jj)  parse_jj_info ;;
+        git) parse_git_branch ;;
+    esac
+}
+
 # Colorful prompt with git info
-export PS1="\[\033[01;32m\]\u\[\033[01;33m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\033[01;36m\]\w\[\033[00m\] \[\033[01;34m\]\$(parse_git_branch)\[\033[00m\]\[\033[01;32m\]\n$ \[\033[00m\]"
+export PS1="\[\033[01;32m\]\u\[\033[01;33m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\033[01;36m\]\w\[\033[00m\] \[\033[01;34m\]\$(parse_vcs_info)\[\033[00m\]\[\033[01;32m\]\n$ \[\033[00m\]"
 
 # ====================
 # SSH AGENT

@@ -27,25 +27,105 @@ end
 # PROMPT
 # ====================
 
-function fish_prompt
-    set -l branch (git branch --show-current 2>/dev/null)
-    set -l git_info ""
-
-    if test -n "$branch"
-        set -l markers ""
-        git diff --cached --quiet 2>/dev/null; or set markers "$markers+"
-        git diff --quiet 2>/dev/null; or set markers "$markers*"
-        if test -n "$(git ls-files --others --exclude-standard 2>/dev/null | head -1)"
-            set markers "$markers?"
+# Which VCS owns $PWD? Walks the tree in pure fish -- no subprocess, unlike
+# `git rev-parse` / `jj root`. First hit wins, so a colocated repo (both .git
+# and .jj present) reports as jj, which is the one you actually drive.
+function _vcs_kind --description 'Echo jj or git for the repo owning $PWD'
+    set -l dir $PWD
+    while test -n "$dir"
+        if test -d "$dir/.jj"
+            echo jj
+            return 0
         end
-        set git_info " "(set_color brblue)"("(set_color brcyan)"$branch$markers"(set_color brblue)")"(set_color normal)
+        # -e, not -d: linked worktrees and submodules use a .git *file*
+        if test -e "$dir/.git"
+            echo git
+            return 0
+        end
+        set dir (string replace -r '/[^/]*$' '' -- $dir)
+    end
+    return 1
+end
+
+# Git status fragment. Markers: + staged, * unstaged, ? untracked
+function _git_prompt_info --description 'Coloured git branch + status fragment'
+    set -l branch (git branch --show-current 2>/dev/null)
+    test -n "$branch"; or return 1
+    set -l markers ""
+    git diff --cached --quiet 2>/dev/null; or set markers "$markers+"
+    git diff --quiet 2>/dev/null; or set markers "$markers*"
+    if test -n "$(git ls-files --others --exclude-standard 2>/dev/null | head -1)"
+        set markers "$markers?"
+    end
+    echo -n " "(set_color brblue)"("(set_color brcyan)"$branch$markers"(set_color brblue)")"(set_color normal)
+end
+
+# Jujutsu status fragment. Renders as (bookmark@changeid<markers>), in magenta
+# rather than git's blue so the two are distinguishable at a glance -- which
+# matters in a colocated repo, where both VCSs are present.
+#
+# Markers: * working copy non-empty, ! conflicted, ? divergent.
+# There is no "+" analogue: jj has no index, so the staged/unstaged split does
+# not exist. jj tracks everything in the workspace, so there is no untracked
+# state either -- "?" is reused for divergent changes.
+#
+# --ignore-working-copy is mandatory in a prompt. Without it, *every* prompt
+# render snapshots the working copy: it writes a "snapshot working copy" entry
+# to the operation log and runs ~5x slower. The cost is that the emptiness
+# marker reflects the last snapshot rather than this instant; it catches up the
+# next time any jj command runs. Set DOTFILES_JJ_SNAPSHOT=1 to trade that
+# staleness for an always-accurate (but repo-mutating) prompt.
+#
+# One invocation returns both rows: the working copy, and the nearest ancestor
+# carrying a bookmark. jj has no "current branch" -- @ is usually a fresh empty
+# commit with no bookmark on it at all.
+function _jj_prompt_info --description 'Coloured jj change + bookmark fragment'
+    command -q jj; or return 1
+    set -l snapshot --ignore-working-copy
+    if test "$DOTFILES_JJ_SNAPSHOT" = 1
+        set snapshot
+    end
+    set -l out (jj $snapshot --no-pager log --color=never --no-graph \
+        -r '@ | heads(::@ & bookmarks())' \
+        -T 'if(current_working_copy, "WC\t" ++ change_id.shortest(8) ++ "\t" ++ empty ++ "\t" ++ conflict ++ "\t" ++ divergent, "BM\t" ++ local_bookmarks.map(|b| b.name()).join(",")) ++ "\n"' \
+        2>/dev/null)
+    or return 1
+    test -n "$out"; or return 1
+
+    set -l change ""
+    set -l bookmark ""
+    set -l markers ""
+    for line in $out
+        set -l f (string split \t -- $line)
+        switch $f[1]
+            case WC
+                set change $f[2]
+                test "$f[3]" = false; and set markers "$markers*"
+                test "$f[4]" = true; and set markers "$markers!"
+                test "$f[5]" = true; and set markers "$markers?"
+            case BM
+                if set -q f[2]
+                    set bookmark (string replace -r ',.*$' '' -- $f[2])
+                end
+        end
+    end
+    echo -n " "(set_color brmagenta)"("(set_color brcyan)"$bookmark@$change$markers"(set_color brmagenta)")"(set_color normal)
+end
+
+function fish_prompt
+    set -l vcs_info ""
+    switch (_vcs_kind)
+        case jj
+            set vcs_info (_jj_prompt_info)
+        case git
+            set vcs_info (_git_prompt_info)
     end
 
     printf '%s%s%s@%s%s%s: %s%s%s%s\n> %s' \
         (set_color brgreen) $USER (set_color normal) \
         (set_color brgreen) (prompt_hostname) (set_color normal) \
         (set_color blue) (prompt_pwd) (set_color normal) \
-        $git_info \
+        "$vcs_info" \
         (set_color normal)
 end
 

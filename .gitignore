@@ -19,6 +19,7 @@ TAGS
 *.o
 .bash_history
 .zsh_history
+TODO.md
 
 # Claude Code directory
 .claude/
