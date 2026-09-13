@@ -11,7 +11,13 @@ set -g fish_greeting ""
 #
 # TERM is deliberately NOT set: the terminal emulator owns it, and overriding
 # it defeats tmux's tmux-256color.
-set -gx EDITOR "emacsclient -t -a emacs"
+# emacsclient fails outright when no server is running. ALTERNATE_EDITOR is the
+# documented fallback; the empty string is a special case that makes emacsclient
+# start the daemon and reconnect, rather than launching a second, unrelated
+# Emacs. Kept as an environment variable rather than `-a ""` inside $EDITOR so
+# that a bare `emacsclient` is covered too. Mirrors ~/.profile.
+set -gx ALTERNATE_EDITOR ""
+set -gx EDITOR "emacsclient -t"
 set -gx VISUAL $EDITOR
 set -gx BROWSER google-chrome
 set -gx ENABLE_LSP_TOOL 1

@@ -72,10 +72,20 @@ unset _gcloud_dir
 # ENVIRONMENT
 # ====================
 
-# -a falls back to a plain emacs when no daemon is running. Set once, here, so
-# non-interactive tools (git from a script, sudoedit) see the same editor the
-# interactive shell uses. Many tools prefer VISUAL, so set both.
-EDITOR="emacsclient -t -a emacs"
+# emacsclient fails outright when no server is running. ALTERNATE_EDITOR is the
+# documented fallback, and the empty string is a special case: it makes
+# emacsclient *start the daemon* and reconnect, rather than launching a second,
+# unrelated Emacs. Every later call then reuses that daemon.
+#
+# Setting it as an environment variable rather than as `-a ""` inside $EDITOR is
+# deliberate: tools that split $EDITOR on whitespace would pass '' through as a
+# literal two-character argument, and the variable also covers a bare
+# `emacsclient` typed by hand.
+export ALTERNATE_EDITOR=""
+
+# Set once, here, so non-interactive tools (git from a script, sudoedit) see the
+# same editor the interactive shell uses. Many tools prefer VISUAL, so set both.
+EDITOR="emacsclient -t"
 VISUAL="$EDITOR"
 export EDITOR VISUAL
 
