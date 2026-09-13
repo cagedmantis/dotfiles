@@ -22,3 +22,4 @@ if [ -f $HOME/.cargo/env ]; then
 fi
 
 export EDITOR=/opt/homebrew/bin/emacs
+export ENABLE_LSP_TOOL=1

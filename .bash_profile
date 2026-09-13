@@ -13,6 +13,8 @@ if [ -d /usr/local/go/bin ]; then
 	export PATH="${PATH}:/usr/local/go/bin"
 fi
 
+export ENABLE_LSP_TOOL=1
+
 ### source bashrc
 if [ -f "${HOME}/.bashrc" ]; then
 	# shellcheck source=/dev/null

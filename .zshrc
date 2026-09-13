@@ -72,6 +72,7 @@ PROMPT="%F{10}%n%f%F{11}@%f%F{10}%m%f%F{10}: %f%F{51}%~%f\$(git_prompt_info)%F{1
 export TERM="xterm-256color"
 export EDITOR="emacsclient -t"
 export BROWSER=google-chrome
+export ENABLE_LSP_TOOL=1
 
 # ====================
 # ALIASES

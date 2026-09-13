@@ -30,6 +30,7 @@ fi
 export TERM="xterm-256color"
 export EDITOR="emacsclient -t"
 export BROWSER=google-chrome
+export ENABLE_LSP_TOOL=1
 export HISTSIZE=50000
 export HISTFILESIZE=50000
 export HISTCONTROL=ignorespace:ignoredups:erasedups
