@@ -219,7 +219,10 @@ case $OSTYPE in
         ;;
     *darwin*)
         alias lockscreen='pmset displaysleepnow'
-        ssh-add -A &> /dev/null
+        # Only load keychain keys if the agent has none yet; quiet, never blocking.
+        if ! ssh-add -l >/dev/null 2>&1; then
+            ssh-add -q --apple-load-keychain 2>/dev/null || ssh-add -q -A 2>/dev/null
+        fi
         ;;
     *cygwin*)
         # Cygwin-specific settings can go here
@@ -248,11 +251,11 @@ if command -v direnv &> /dev/null; then
 fi
 
 # Google Cloud SDK
-if [ -f '/Users/carlos/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/carlos/Downloads/google-cloud-sdk/path.zsh.inc'; fi
-if [ -f '/Users/carlos/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/carlos/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+if [ -f "$HOME/Downloads/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/Downloads/google-cloud-sdk/path.zsh.inc"; fi
+if [ -f "$HOME/Downloads/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/Downloads/google-cloud-sdk/completion.zsh.inc"; fi
 
 # Docker CLI completions
-fpath=(/Users/carlos/.docker/completions $fpath)
+fpath=("$HOME/.docker/completions" $fpath)
 
 # MacPorts
 export PATH=/opt/local/bin:/opt/local/sbin:$PATH

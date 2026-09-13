@@ -201,7 +201,11 @@ switch (uname)
         abbr -a aptitude 'sudo aptitude'
     case Darwin
         alias lockscreen 'pmset displaysleepnow'
-        ssh-add -A 2>/dev/null
+        # Only load keychain keys if the agent has none yet; quiet, never blocking.
+        if not ssh-add -l >/dev/null 2>&1
+            ssh-add -q --apple-load-keychain 2>/dev/null
+            or ssh-add -q -A 2>/dev/null
+        end
 end
 
 # ====================

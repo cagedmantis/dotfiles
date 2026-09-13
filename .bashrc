@@ -40,23 +40,37 @@ export HISTTIMEFORMAT='%F %T '
 # SHELL OPTIONS
 # ====================
 
-# History settings
-shopt -s histappend      # Append to history file
-shopt -s cmdhist         # Store multiline commands as single entry
+# Enable a shell option only if this bash recognises it.
+#
+# macOS still ships bash 3.2.57 (the last GPLv2 release) as /bin/bash, while
+# Linux and Homebrew ship 5.x. Rather than hand-gating each option on
+# BASH_VERSINFO, probe it: `shopt -s` on an unknown option name simply fails,
+# so one rc file works from 3.2 upward and a newer option can be added later
+# without yet another version test.
+_shopt_enable() {
+    local opt
+    for opt in "$@"; do
+        shopt -s "$opt" 2>/dev/null
+    done
+}
+
+# History
+_shopt_enable histappend    # Append to history rather than overwriting it
+_shopt_enable cmdhist       # Store multiline commands as a single entry
 
 # Window and display
-shopt -s checkwinsize    # Check window size after each command
+_shopt_enable checkwinsize  # Refresh LINES/COLUMNS after each command
 
 # Directory navigation
-shopt -s cdspell         # Correct minor spelling errors in cd
-shopt -s dirspell        # Correct minor spelling errors in directory names (bash 4+)
-shopt -s dotglob         # Include dotfiles in expansion
+_shopt_enable cdspell       # Correct minor typos in cd targets
+_shopt_enable dotglob       # Include dotfiles in glob expansion
 
-# Advanced features (bash 4+)
-if ((BASH_VERSINFO[0] >= 4)); then
-    shopt -s autocd      # Auto-cd when typing directory name
-    shopt -s globstar    # Enable ** recursive globbing
-fi
+# bash 4+ only. Silently skipped on macOS system bash, which rejected the
+# unguarded `shopt -s dirspell` with "invalid shell option name" on every
+# interactive start.
+_shopt_enable dirspell      # Correct minor typos during directory completion
+_shopt_enable autocd        # Type a bare directory name to cd into it
+_shopt_enable globstar      # ** matches recursively
 
 # ====================
 # COMPLETIONS
@@ -72,8 +86,17 @@ if [ -f ~/.git-completion.bash ]; then
     source ~/.git-completion.bash
 fi
 
-# Kubectl completion
-if command -v kubectl &> /dev/null; then
+# Kubectl completion.
+#
+# kubectl's generated script needs bash 4.4+ (it relies on bash-completion v2,
+# which itself wants 4.2+). On macOS system bash 3.2 it sources without error
+# but defines nothing at all -- verified: 0 kubectl functions, completion
+# silently inactive. Gate it explicitly so the dead path is visible here rather
+# than looking like it works. For working kubectl completion on macOS, install
+# a modern bash (`brew install bash`) and use that as your shell.
+if command -v kubectl >/dev/null 2>&1 \
+   && [ "${BASH_VERSINFO[0]:-0}" -ge 5 -o \
+        \( "${BASH_VERSINFO[0]:-0}" -eq 4 -a "${BASH_VERSINFO[1]:-0}" -ge 4 \) ]; then
     source <(kubectl completion bash)
 fi
 
@@ -165,9 +188,38 @@ export PS1="\[\033[01;32m\]\u\[\033[01;33m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\0
 # SSH AGENT
 # ====================
 
-if [ -z "$SSH_AUTH_SOCK" ]; then
-    eval "$(ssh-agent -s)"
-    ssh-add
+# Reuse a single agent across shells instead of spawning one per shell.
+#
+# The previous version ran `eval "$(ssh-agent -s)"` whenever SSH_AUTH_SOCK was
+# unset, leaking an unreaped agent for every interactive shell, and then called
+# bare `ssh-add`, which blocks startup on a passphrase prompt and loads every
+# key unlocked for the life of that orphan.
+#
+# macOS sets SSH_AUTH_SOCK via launchd, so this is a no-op there; it matters on
+# Linux consoles and detached tmux sessions. Keys are deliberately NOT added
+# here -- put `AddKeysToAgent yes` in ~/.ssh/config so they load on first use.
+if [ -z "$SSH_AUTH_SOCK" ] && command -v ssh-agent >/dev/null 2>&1; then
+    _ssh_env="${XDG_RUNTIME_DIR:-$HOME/.cache}/ssh-agent.env"
+    # Adopt the recorded agent if it is still alive.
+    [ -f "$_ssh_env" ] && . "$_ssh_env" >/dev/null 2>&1
+    # ssh-add -l exit codes: 0 = agent with keys, 1 = agent but no keys,
+    # 2 = no usable agent. Only 2 justifies starting a new one.
+    ssh-add -l >/dev/null 2>&1
+    if [ $? -eq 2 ]; then
+        mkdir -p "$(dirname "$_ssh_env")"
+        (umask 077; ssh-agent -s > "$_ssh_env" 2>/dev/null)
+        # A failed spawn still creates the file. ssh-agent fails for real
+        # reasons -- most commonly a $HOME long enough that its socket path
+        # exceeds the ~104-char Unix domain socket limit. Sourcing the empty
+        # result is harmless but pointless, so drop it instead of leaving a
+        # stale file for every later shell to read.
+        if [ -s "$_ssh_env" ]; then
+            . "$_ssh_env" >/dev/null 2>&1
+        else
+            rm -f "$_ssh_env"
+        fi
+    fi
+    unset _ssh_env
 fi
 
 # ====================
@@ -275,16 +327,18 @@ case $MACHTYPE in
         alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
         alias lockscreen='pmset displaysleepnow'
         alias vboxmanage='/Applications/VirtualBox.app/Contents/MacOS/VBoxManage'
-        alias vmrun="/Applications/VMware\ Fusion.app/Contents/Library/vmrun"
 
-        # SSH agent for macOS
-        ssh-add -A &> /dev/null
+        # Load keychain-stored keys, but only if the agent has none yet --
+        # the old unconditional `ssh-add -A` ran on every interactive shell.
+        # --apple-load-keychain is the current spelling; -A is the old alias.
+        if ! ssh-add -l >/dev/null 2>&1; then
+            ssh-add -q --apple-load-keychain 2>/dev/null || ssh-add -q -A 2>/dev/null
+        fi
 
-        # VMware desktop shortcuts
-        export DESKTOP="/Users/carlos/Documents/Virtual Machines.localized/do-desktop.vmwarevm/do-desktop.vmx"
-        alias desktop_start="vmrun start \"$DESKTOP\" nogui"
-        alias desktop_stop="vmrun stop \"$DESKTOP\" nogui"
-        alias desktop_ssh="ssh carlos@172.16.81.100"
+        # Host-specific VM shortcuts (vmrun, DESKTOP, desktop_*) intentionally
+        # live in ~/.bash_profile_personal, not here: they carry a private LAN
+        # address, a username and an absolute home path. That file is sourced
+        # near the end of this script and is never committed.
 
         # Source macOS-specific config
         if [ -f ~/.bash_osx ]; then

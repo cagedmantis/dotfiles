@@ -20,4 +20,7 @@ if [ -f "${HOME}/.bashrc" ]; then
 	# shellcheck source=/dev/null
     source "${HOME}/.bashrc"
 fi
-. "$HOME/.cargo/env"
+# Rust
+if [ -f "$HOME/.cargo/env" ]; then
+	. "$HOME/.cargo/env"
+fi
