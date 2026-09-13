@@ -89,11 +89,11 @@ make adopt
 |------|---------|
 | `.bashrc` | Bash shell configuration, aliases, and functions |
 | `.zshrc` | Zsh shell configuration with modern features |
-| `.zshenv` | Zsh environment variables and PATH settings |
-| `.bash_profile` | Bash login shell configuration |
+| `.zshenv` | Zsh, every invocation; dedupes PATH and sources `.profile` |
+| `.bash_profile` | Bash login shell; sources `.profile` then `.bashrc` |
 | `.tmux.conf` | Tmux terminal multiplexer configuration |
 | `.gitignore` | Files to ignore in this repository |
-| `.profile` | POSIX shell profile |
+| `.profile` | POSIX base: PATH, EDITOR/VISUAL and exported env, shared by sh, bash and zsh |
 | `.stow-local-ignore` | Files for Stow to ignore when symlinking (must be named `.stow-local-ignore`; Stow does not read a `.stow-global-ignore` placed inside a package) |
 
 ## Key Features
@@ -159,12 +159,46 @@ Set environment variables in:
 - `ec` - Open file in Emacs client
 - `gbp` - Git branch and push function
 
-## Git Integration
+## VCS Prompt
 
-Both bash and zsh prompts show git information:
-- Current branch name
-- `*` indicates uncommitted changes
-- `+` indicates untracked files
+All three shells (bash, zsh, fish) show the state of the repository you are in.
+Which VCS is reported is decided by walking up from the current directory: the
+first `.jj` or `.git` found wins, so a colocated repo reports as **jj**.
+
+### Git — rendered in blue as `(branch<markers>)`
+
+| Marker | Meaning |
+|--------|---------|
+| `+` | staged changes (index differs from HEAD) |
+| `*` | unstaged changes (working tree differs from index) |
+| `?` | untracked files present |
+
+On a detached HEAD — including `git bisect` and `git worktree add --detach` —
+there is no branch name, so the short commit is shown instead: `(@a1b2c3d)`.
+
+### Jujutsu — rendered in magenta as `(bookmark@changeid<markers>)`
+
+| Marker | Meaning |
+|--------|---------|
+| `*` | working copy is not empty (as of the last snapshot — see below) |
+| `!` | the change is conflicted |
+| `?` | the change is divergent |
+
+The markers differ from git because the models do. jj has no index, so there is
+no staged/unstaged split and no `+`. jj tracks everything in the workspace, so
+there is no untracked state either, and `?` is reused for divergent changes.
+
+`bookmark` is the nearest bookmark in the ancestry, not a "current branch" — jj
+has no such concept, and the working copy `@` usually carries no bookmark at
+all. When there is none anywhere above you, the prompt shows just `(@changeid)`.
+
+**Snapshot accuracy.** The prompt runs jj with `--ignore-working-copy`. Without
+that flag, every prompt render would snapshot the working copy, writing a
+`snapshot working copy` entry to the operation log and running roughly 5x
+slower. The trade-off is that `*` reflects the last snapshot rather than this
+instant; it catches up the next time any jj command runs. Set
+`DOTFILES_JJ_SNAPSHOT=1` to get an always-accurate marker at the cost of
+mutating the repo on every prompt.
 
 ## Troubleshooting
 

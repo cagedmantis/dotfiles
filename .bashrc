@@ -14,23 +14,15 @@ esac
 # HISTORY CONFIGURATION
 # ====================
 
-if [ -d "$HOME/bin/google-cloud-sdk/bin" ]; then
-	export PATH=$PATH:$HOME/bin/google-cloud-sdk/bin;
-fi
-
-if [ -d "$HOME/bin/android-sdk-linux_86/tools" ]; then
-    export PATH=${PATH}:$HOME/bin/android-sdk-linux_86/tools:$HOME/bin
-fi
-
-# rust
-[ -d "${HOME}/.cargo/bin" ] && export PATH="${PATH}:${HOME}/.cargo/bin"
-[ -d "${HOME}/.cargo/bin" ] && source "$HOME/.cargo/env"
+# PATH, EDITOR, ENABLE_LSP_TOOL and the Google Cloud SDK location are set in
+# ~/.profile, which ~/.bash_profile sources. Nothing PATH-related belongs here:
+# this file runs only for interactive shells, so anything added here would be
+# missing from `ssh host cmd`, cron and make subshells.
+#
+# TERM is deliberately not set either -- see ~/.profile.
 
 # System settings
-export TERM="xterm-256color"
-export EDITOR="emacsclient -t"
 export BROWSER=google-chrome
-export ENABLE_LSP_TOOL=1
 export HISTSIZE=50000
 export HISTFILESIZE=50000
 export HISTCONTROL=ignorespace:ignoredups:erasedups
@@ -63,7 +55,10 @@ _shopt_enable checkwinsize  # Refresh LINES/COLUMNS after each command
 
 # Directory navigation
 _shopt_enable cdspell       # Correct minor typos in cd targets
-_shopt_enable dotglob       # Include dotfiles in glob expansion
+
+# dotglob is deliberately NOT enabled. With it on, `rm *`, `cp * dst` and every
+# `for f in *` silently include .git, .env and .ssh. Enable it locally in the
+# one function that needs it instead.
 
 # bash 4+ only. Silently skipped on macOS system bash, which rejected the
 # unguarded `shopt -s dirspell` with "invalid shell option name" on every
@@ -122,9 +117,18 @@ _vcs_kind() {
 # Git branch + status function
 # Markers: + staged, * unstaged, ? untracked
 parse_git_branch() {
-    local ref
-    ref=$(git symbolic-ref HEAD 2>/dev/null) || return
-    local branch="${ref#refs/heads/}"
+    local ref branch sha
+    ref=$(git symbolic-ref --quiet HEAD 2>/dev/null)
+    if [ -n "$ref" ]; then
+        branch="${ref#refs/heads/}"
+    else
+    # Detached HEAD -- also `git bisect` and `worktree add --detach` -- has no
+    # branch name. Show the short commit rather than rendering nothing. The "@"
+    # prefix matches the jj format, where a bare @changeid likewise means
+    # "no name to show here".
+        sha=$(git rev-parse --short HEAD 2>/dev/null) || return
+        branch="@$sha"
+    fi
     local markers=""
     git diff --cached --quiet 2>/dev/null || markers="${markers}+"
     git diff --quiet 2>/dev/null || markers="${markers}*"
@@ -274,13 +278,18 @@ alias ping='ping -c 5'
 alias openports='sudo lsof -i -P | grep -i "listen"'
 
 # Application shortcuts
-alias tmux='tmux -2'
 alias ec="emacsclient -t"
 alias screen='TERM=screen screen'
 
 # Utility functions
-alias weather='curl http://wttr.in/nyc'
-alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
+alias weather='curl https://wttr.in/nyc'
+# xargs -r is GNU-only, so filter empties with a while-read loop instead:
+# bare `xargs kill` runs `kill` with no arguments when nothing matches.
+chromekill() {
+    ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process \
+        | tr -s ' ' | cut -d ' ' -f2 \
+        | while read -r _pid; do [ -n "$_pid" ] && kill "$_pid"; done
+}
 
 # Git aliases
 alias g='git'
@@ -312,7 +321,11 @@ case $MACHTYPE in
         alias tree='tree -Ca -I ".git|*.pyc|*.swp"'
         ;;
     *linux*)
-        export DISPLAY=:0.0
+        # Only when nothing else has set it, and never over SSH: forcing
+        # DISPLAY breaks `ssh -X` (which sets localhost:10.0) and Wayland.
+        if [ -z "$DISPLAY" ] && [ -z "$SSH_CONNECTION" ]; then
+            export DISPLAY=:0.0
+        fi
         alias apt-get='sudo apt-get'
         alias apt-cache='sudo apt-cache'
         alias aptitude='sudo aptitude'
@@ -381,12 +394,11 @@ if command -v direnv &> /dev/null; then
 fi
 
 # Google Cloud SDK
-if [ -f "$HOME/bin/google-cloud-sdk/completion.bash.inc" ]; then
-    source "$HOME/bin/google-cloud-sdk/completion.bash.inc"
-fi
-
-if [ -f "$HOME/bin/google-cloud-sdk/path.bash.inc" ]; then
-    source "$HOME/bin/google-cloud-sdk/path.bash.inc"
+# GCLOUD_SDK_ROOT is probed once in ~/.profile; every shell uses that answer
+# rather than each hardcoding a different guess.
+if [ -n "$GCLOUD_SDK_ROOT" ]; then
+    # shellcheck source=/dev/null
+    [ -f "$GCLOUD_SDK_ROOT/completion.bash.inc" ] && . "$GCLOUD_SDK_ROOT/completion.bash.inc"
 fi
 
 # Node Version Manager
@@ -419,8 +431,3 @@ if [ -f ~/.bash_profile_personal ]; then
     source "$HOME/.bash_profile_personal"
 fi
 
-# MacPorts
-export PATH=/opt/local/bin:/opt/local/sbin:$PATH
-
-# Local bin
-export PATH="$HOME/.local/bin:$PATH"

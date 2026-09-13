@@ -6,22 +6,46 @@
 
 set -g fish_greeting ""
 
-set -gx TERM xterm-256color
-set -gx EDITOR "emacsclient -t"
+# Fish cannot source ~/.profile, so this block mirrors it. Keep the two in
+# sync -- ~/.profile is the reference.
+#
+# TERM is deliberately NOT set: the terminal emulator owns it, and overriding
+# it defeats tmux's tmux-256color.
+set -gx EDITOR "emacsclient -t -a emacs"
+set -gx VISUAL $EDITOR
 set -gx BROWSER google-chrome
 set -gx ENABLE_LSP_TOOL 1
 
-# PATH
-fish_add_path $HOME/.local/bin
-fish_add_path /opt/local/bin /opt/local/sbin
+# PATH. fish_add_path is idempotent and skips directories that do not exist,
+# which is why no explicit guards are needed here.
+#
+# -P/--path is required. Without it fish_add_path writes to $fish_user_paths, a
+# *universal* variable that is persisted outside this repo and prepended to
+# $PATH as a whole block -- so appended entries would still land ahead of
+# /usr/bin, and this machine would disagree with a fresh one. -P edits $PATH
+# directly, giving the same precedence as ~/.profile.
+fish_add_path -aP /usr/local/sbin /usr/local/go/bin $HOME/go/bin $HOME/bin
+fish_add_path -P /opt/local/sbin /opt/local/bin $HOME/.cargo/bin $HOME/.local/bin
 
-if test -d $HOME/.cargo/bin
-    fish_add_path $HOME/.cargo/bin
-end
+# Known, harmless divergence from ~/.profile: rustup drops a conf.d/rustup.fish
+# that sources ~/.cargo/env.fish, and fish runs conf.d/ *before* config.fish.
+# ~/.cargo/bin is therefore already on PATH by the time the line above runs, and
+# fish_add_path will not relocate an entry it already finds -- so .local/bin
+# ends up ahead of .cargo/bin here, while ~/.profile has them the other way
+# round. Both directories are present with the same precedence relative to the
+# system paths, and nothing is installed under both names, so this is cosmetic.
 
-if test -d $HOME/bin/google-cloud-sdk/bin
-    fish_add_path $HOME/bin/google-cloud-sdk/bin
+# Google Cloud SDK: probe the locations this has lived in, matching ~/.profile.
+for _gcloud_dir in $HOME/google-cloud-sdk $HOME/bin/google-cloud-sdk \
+        $HOME/Downloads/google-cloud-sdk /opt/homebrew/share/google-cloud-sdk \
+        /usr/local/share/google-cloud-sdk
+    if test -d $_gcloud_dir
+        set -gx GCLOUD_SDK_ROOT $_gcloud_dir
+        fish_add_path -aP $_gcloud_dir/bin
+        break
+    end
 end
+set -e _gcloud_dir
 
 # ====================
 # PROMPT
@@ -50,7 +74,14 @@ end
 # Git status fragment. Markers: + staged, * unstaged, ? untracked
 function _git_prompt_info --description 'Coloured git branch + status fragment'
     set -l branch (git branch --show-current 2>/dev/null)
-    test -n "$branch"; or return 1
+    if test -z "$branch"
+        # Detached HEAD -- also `git bisect` and `worktree add --detach` -- has
+        # no branch name. Show the short commit rather than rendering nothing.
+        # The "@" prefix matches the jj format, where a bare @changeid likewise
+        # means "no name to show here".
+        set branch "@"(git rev-parse --short HEAD 2>/dev/null)
+        test "$branch" = "@"; and return 1
+    end
     set -l markers ""
     git diff --cached --quiet 2>/dev/null; or set markers "$markers+"
     git diff --quiet 2>/dev/null; or set markers "$markers*"
@@ -133,20 +164,27 @@ end
 # ALIASES
 # ====================
 
-# Core utilities
+# Core utilities.
+#
+# -G means "colour" on BSD/macOS ls but "suppress the group column" on GNU
+# coreutils, so every listing alias must pick its flags per platform -- not
+# just `ls`, which is how la/l/ll previously ended up wrong on Linux.
 if command -q dircolors
+    # GNU / Linux
     alias ls 'ls --color=auto'
+    alias la 'ls -aAF --color=auto'
+    alias l 'ls -lhF --color=auto'
+    alias ll 'ls -alhF --color=auto'
 else
+    # BSD / macOS
     alias ls 'ls -G'
+    alias la 'ls -aAFG'
+    alias l 'ls -lhFG'
+    alias ll 'ls -alhFG'
 end
 alias grep 'grep --color=auto'
 alias fgrep 'fgrep --color=auto'
 alias egrep 'egrep --color=auto'
-
-# File listing
-alias la 'ls -aAFG'
-alias l 'ls -lhFG'
-alias ll 'ls -alhFG'
 alias recent 'ls -lAt | head'
 
 # Safety
@@ -168,10 +206,16 @@ alias df 'df -h'
 alias du 'du -h -c'
 alias ping 'ping -c 5'
 alias openports 'sudo lsof -i -P | grep -i listen'
-alias tmux 'tmux -2'
 alias ec 'emacsclient -t'
-alias weather 'curl http://wttr.in/nyc'
-alias chromekill "ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
+alias weather 'curl https://wttr.in/nyc'
+# xargs -r is GNU-only, so filter empties explicitly: bare `xargs kill` runs
+# `kill` with no arguments when nothing matches.
+function chromekill --description 'Kill hung Chrome renderer processes'
+    for pid in (ps ux | grep '[C]hrome Helper --type=renderer' \
+            | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2)
+        test -n "$pid"; and kill $pid
+    end
+end
 
 # Git abbreviations — expand in-place so the full command is visible and editable
 abbr -a g git
@@ -195,7 +239,11 @@ abbr -a gstp 'git stash pop'
 
 switch (uname)
     case Linux
-        set -gx DISPLAY :0.0
+        # Only when nothing else has set it, and never over SSH: forcing
+        # DISPLAY breaks `ssh -X` (which sets localhost:10.0) and Wayland.
+        if test -z "$DISPLAY" -a -z "$SSH_CONNECTION"
+            set -gx DISPLAY :0.0
+        end
         abbr -a apt-get 'sudo apt-get'
         abbr -a apt-cache 'sudo apt-cache'
         abbr -a aptitude 'sudo aptitude'
@@ -227,11 +275,10 @@ if command -q direnv
 end
 
 # Google Cloud SDK
-if test -f $HOME/Downloads/google-cloud-sdk/path.fish.inc
-    source $HOME/Downloads/google-cloud-sdk/path.fish.inc
-end
-if test -f $HOME/Downloads/google-cloud-sdk/completion.fish.inc
-    source $HOME/Downloads/google-cloud-sdk/completion.fish.inc
+# GCLOUD_SDK_ROOT is probed above, matching ~/.profile. path.fish.inc only
+# edits PATH, which fish_add_path already handled, so only completions load.
+if set -q GCLOUD_SDK_ROOT; and test -f $GCLOUD_SDK_ROOT/completion.fish.inc
+    source $GCLOUD_SDK_ROOT/completion.fish.inc
 end
 
 # Docker CLI completions

@@ -34,6 +34,13 @@ setopt PROMPT_SUBST
 # AUTO-COMPLETION
 # ====================
 
+# Completion search path must be complete BEFORE compinit runs -- compinit
+# scans fpath once, so anything appended afterwards is silently ignored for the
+# life of the shell. (Docker's completions used to be added at the bottom of
+# this file and therefore never loaded.)
+[[ -d "$HOME/.docker/completions" ]] && fpath=("$HOME/.docker/completions" $fpath)
+[[ -d /opt/homebrew/share/zsh/site-functions ]] && fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+
 autoload -Uz compinit
 # Regenerate the dump only once per day; use cached version otherwise
 if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
@@ -68,7 +75,16 @@ _vcs_kind() {
 # Git prompt function. Markers: + staged, * unstaged, ? untracked
 git_prompt_info() {
     git rev-parse --git-dir > /dev/null 2>&1 || return
-    local branch=$(git branch --show-current 2>/dev/null)
+    local branch sha
+    branch=$(git branch --show-current 2>/dev/null)
+    if [[ -z $branch ]]; then
+    # Detached HEAD -- also `git bisect` and `worktree add --detach` -- has no
+    # branch name. Show the short commit rather than rendering nothing. The "@"
+    # prefix matches the jj format, where a bare @changeid likewise means
+    # "no name to show here".
+        sha=$(git rev-parse --short HEAD 2>/dev/null) || return
+        branch="@$sha"
+    fi
     local markers=""
     git diff --cached --quiet 2>/dev/null || markers="${markers}+"
     git diff --quiet 2>/dev/null || markers="${markers}*"
@@ -135,10 +151,10 @@ PROMPT="%F{10}%n%f%F{11}@%f%F{10}%m%f%F{10}: %f%F{51}%~%f\$(vcs_prompt_info)%F{1
 # ENVIRONMENT
 # ====================
 
-export TERM="xterm-256color"
-export EDITOR="emacsclient -t"
+# TERM, EDITOR/VISUAL, ENABLE_LSP_TOOL and PATH all come from ~/.profile,
+# sourced by ~/.zshenv. TERM in particular must not be set by a shell: the
+# terminal emulator owns it, and overriding it defeats tmux's tmux-256color.
 export BROWSER=google-chrome
-export ENABLE_LSP_TOOL=1
 
 # ====================
 # ALIASES
@@ -148,16 +164,27 @@ export ENABLE_LSP_TOOL=1
 export LSCOLORS=GxFxCxDxBxegedabagacad
 export LS_COLORS='di=1;36:ln=1;35:so=1;32:pi=1;33:ex=1;31'
 
-# Core utilities with colors
-alias ls='ls -G'  # macOS color support
+# Core utilities with colors.
+#
+# -G means "colour" on BSD/macOS ls but "suppress the group column" on GNU
+# coreutils, so the flag must be chosen per platform rather than hardcoded.
+# dircolors exists only in coreutils, which makes it a reliable probe.
+if (( $+commands[dircolors] )); then
+    # GNU / Linux
+    alias ls='ls --color=auto'
+    alias la='ls -aAF --color=auto'
+    alias l='ls -lhF --color=auto'
+    alias ll='ls -alhF --color=auto'
+else
+    # BSD / macOS
+    alias ls='ls -G'
+    alias la='ls -aAFG'
+    alias l='ls -lhFG'
+    alias ll='ls -alhFG'
+fi
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
-
-# File listing variations
-alias la='ls -aAFG'
-alias l='ls -lhFG'
-alias ll='ls -alhFG'
 alias recent="ls -lAt | head"
 
 # Safety aliases (interactive mode)
@@ -198,12 +225,17 @@ alias gst='git stash'
 alias gstp='git stash pop'
 
 # Application shortcuts
-alias tmux='tmux -2'
 alias ec="emacsclient -t"
 
 # Utility functions
-alias weather='curl http://wttr.in/nyc'
-alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2 | xargs kill"
+alias weather='curl https://wttr.in/nyc'
+# xargs -r is GNU-only, so filter empties with a while-read loop instead:
+# bare `xargs kill` runs `kill` with no arguments when nothing matches.
+chromekill() {
+    ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process \
+        | tr -s ' ' | cut -d ' ' -f2 \
+        | while read -r _pid; do [[ -n $_pid ]] && kill "$_pid"; done
+}
 
 # ====================
 # OS-SPECIFIC CONFIGURATION
@@ -211,7 +243,11 @@ alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v exten
 
 case $OSTYPE in
     *linux*)
-        export DISPLAY=:0.0
+        # Only when nothing else has set it, and never over SSH: forcing
+        # DISPLAY breaks `ssh -X` (which sets localhost:10.0) and Wayland.
+        if [[ -z $DISPLAY && -z $SSH_CONNECTION ]]; then
+            export DISPLAY=:0.0
+        fi
         alias apt-get='sudo apt-get'
         alias apt-cache='sudo apt-cache'
         alias aptitude='sudo aptitude'
@@ -251,13 +287,10 @@ if command -v direnv &> /dev/null; then
 fi
 
 # Google Cloud SDK
-if [ -f "$HOME/Downloads/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/Downloads/google-cloud-sdk/path.zsh.inc"; fi
-if [ -f "$HOME/Downloads/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/Downloads/google-cloud-sdk/completion.zsh.inc"; fi
+# GCLOUD_SDK_ROOT is probed once in ~/.profile; every shell uses that answer
+# rather than each hardcoding a different guess. path.zsh.inc only edits PATH,
+# which ~/.profile already handles, so only completions are sourced here.
+if [[ -n $GCLOUD_SDK_ROOT && -f "$GCLOUD_SDK_ROOT/completion.zsh.inc" ]]; then
+    . "$GCLOUD_SDK_ROOT/completion.zsh.inc"
+fi
 
-# Docker CLI completions
-fpath=("$HOME/.docker/completions" $fpath)
-
-# MacPorts
-export PATH=/opt/local/bin:/opt/local/sbin:$PATH
-
-export PATH="$HOME/.local/bin:$PATH"

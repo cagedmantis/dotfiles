@@ -1,26 +1,16 @@
 #!/bin/bash
+# Bash login shell.
+#
+# PATH and exported environment live in ~/.profile so that sh, bash and zsh all
+# agree; this file only wires bash up to it and then loads the interactive
+# config. Do not add PATH entries here.
 
-### Set Path
-if [ -d /usr/local/sbin ]; then
-	export PATH="${PATH}:/usr/local/sbin"
+if [ -f "$HOME/.profile" ]; then
+	# shellcheck source=/dev/null
+	. "$HOME/.profile"
 fi
 
-if [ -d "${HOME}/bin" ]; then
-	export PATH="${PATH}:${HOME}/bin"
-fi
-
-if [ -d /usr/local/go/bin ]; then
-	export PATH="${PATH}:/usr/local/go/bin"
-fi
-
-export ENABLE_LSP_TOOL=1
-
-### source bashrc
 if [ -f "${HOME}/.bashrc" ]; then
 	# shellcheck source=/dev/null
-    source "${HOME}/.bashrc"
-fi
-# Rust
-if [ -f "$HOME/.cargo/env" ]; then
-	. "$HOME/.cargo/env"
+	. "${HOME}/.bashrc"
 fi
