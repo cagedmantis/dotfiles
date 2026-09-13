@@ -1,0 +1,60 @@
+# GNU Stow ignore list for this package.
+#
+# This file MUST be named .stow-local-ignore and live in the package root
+# (which, for this repo, is the repo root). Stow looks in exactly two places:
+# <package>/.stow-local-ignore, then ~/.stow-global-ignore. A file named
+# .stow-global-ignore *inside the package* is never read -- that was the bug
+# this file replaces.
+#
+# Because a local ignore list completely REPLACES stow's built-in defaults,
+# the useful defaults (VCS metadata, editor droppings, README/LICENSE) are
+# repeated below rather than inherited.
+#
+# Matching rules, from Stow.pm compile_ignore_regexps():
+#   * A pattern with no "/" matches the BASENAME, anchored as ^(pat)$.
+#   * A pattern containing "/" matches the path relative to the package root
+#     with a leading slash, anchored as (^|/)(pat)(/|$).
+# The second anchoring is why these patterns carry NO trailing slash:
+# "^/\.claude/" fails to match both "/.claude" and "/.claude/settings.json",
+# which would silently stow the directory anyway.
+#
+# Stow always ignores this file itself, so it is not listed here.
+
+# --- Repo scaffolding: belongs in the repo, never in $HOME -----------------
+^/Makefile
+^/README.*
+^/LICENSE.*
+^/TODO\.md
+^/CLAUDE\.md
+^/\.stow-global-ignore
+^/tests?
+^/\.github
+
+# --- Machine-local state ---------------------------------------------------
+# Claude Code's per-project settings. Stowing this lands a symlink inside the
+# real ~/.claude and pollutes live tool config.
+^/\.claude
+
+# --- Shell history: never stow. A symlink here means every command you type
+# --- gets written into a git worktree.
+\.bash_history
+\.zsh_history
+
+# --- VCS metadata ----------------------------------------------------------
+# Listed individually rather than as \.git.* so that a future tracked
+# .gitconfig / .gitattributes still gets stowed into $HOME.
+\.git
+\.gitignore
+\.gitmodules
+\.jj
+\.hg
+\.svn
+CVS
+RCS
+
+# --- OS and editor droppings -----------------------------------------------
+\.DS_Store
+\._.*
+.+~
+\#.*\#
+\.\#.*

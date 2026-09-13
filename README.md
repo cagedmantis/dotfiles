@@ -94,7 +94,7 @@ make adopt
 | `.tmux.conf` | Tmux terminal multiplexer configuration |
 | `.gitignore` | Files to ignore in this repository |
 | `.profile` | POSIX shell profile |
-| `.stow-global-ignore` | Files for Stow to ignore when symlinking |
+| `.stow-local-ignore` | Files for Stow to ignore when symlinking (must be named `.stow-local-ignore`; Stow does not read a `.stow-global-ignore` placed inside a package) |
 
 ## Key Features
 
