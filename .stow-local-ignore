@@ -28,6 +28,7 @@
 ^/CLAUDE\.md
 ^/\.stow-global-ignore
 ^/tests?
+^/scripts
 ^/\.github
 
 # --- Machine-local state ---------------------------------------------------

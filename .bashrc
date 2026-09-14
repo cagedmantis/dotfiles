@@ -115,25 +115,47 @@ _vcs_kind() {
 }
 
 # Git branch + status function
-# Markers: + staged, * unstaged, ? untracked
+# Markers: + staged, * unstaged, ? untracked.
+#
+# One `git status --porcelain=v2 --branch` replaces the five separate git
+# invocations this used to make (symbolic-ref, diff --cached, diff, ls-files
+# --others). Measured on this repo: 46ms -> 12ms per prompt render, and
+# `ls-files --others` was the expensive one on a large worktree.
+#
+# Format: "# branch.head <name>" carries the branch, or the literal
+# "(detached)"; "1"/"2" lines carry a two-character XY status where X is the
+# staged state and Y the unstaged one, "." meaning unchanged; "u" lines are
+# unmerged; "?" lines are untracked.
+#
+# The case patterns quote the literal prefixes, which stops "?" being treated
+# as a single-character glob.
+# Hardening (see TODO #42): git reads the *repository's own* .git/config
+# before doing anything, and core.fsmonitor is a command git executes. A repo
+# you merely `cd` into -- an unpacked tarball, a cloned PR branch -- therefore
+# gets arbitrary code execution once per prompt render. Verified: 1 execution
+# per render before this flag, 0 after, with branch and dirty state unchanged.
+# diff.external is neutralised for the same reason.
 parse_git_branch() {
-    local ref branch sha
-    ref=$(git symbolic-ref --quiet HEAD 2>/dev/null)
-    if [ -n "$ref" ]; then
-        branch="${ref#refs/heads/}"
-    else
-    # Detached HEAD -- also `git bisect` and `worktree add --detach` -- has no
-    # branch name. Show the short commit rather than rendering nothing. The "@"
-    # prefix matches the jj format, where a bare @changeid likewise means
-    # "no name to show here".
-        sha=$(git rev-parse --short HEAD 2>/dev/null) || return
-        branch="@$sha"
-    fi
-    local markers=""
-    git diff --cached --quiet 2>/dev/null || markers="${markers}+"
-    git diff --quiet 2>/dev/null || markers="${markers}*"
-    [ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ] && markers="${markers}?"
-    echo "(${branch}${markers})"
+    local line xy branch="" oid="" staged="" unstaged="" untracked=""
+    while IFS= read -r line; do
+        case $line in
+            '# branch.head '*) branch=${line#\# branch.head } ;;
+            '# branch.oid '*)  oid=${line#\# branch.oid } ;;
+            '1 '*|'2 '*)
+                xy=${line:2:2}
+                [ "${xy%?}" != "." ] && staged="+"
+                [ "${xy#?}" != "." ] && unstaged="*"
+                ;;
+            'u '*) unstaged="*" ;;
+            '? '*) untracked="?" ;;
+        esac
+    done < <(git -c core.fsmonitor= -c diff.external= status --porcelain=v2 --branch 2>/dev/null)
+    [ -n "$branch" ] || return
+    # Detached HEAD -- also `git bisect` and `worktree add --detach`. Show the
+    # short commit; the "@" prefix matches the jj format, where a bare
+    # @changeid likewise means "no name to show here".
+    [ "$branch" = "(detached)" ] && branch="@${oid:0:7}"
+    echo "(${branch}${staged}${unstaged}${untracked})"
 }
 
 # Jujutsu working-copy info. Renders as (bookmark@changeid<markers>).
@@ -331,10 +353,6 @@ case $MACHTYPE in
         alias aptitude='sudo aptitude'
         alias rdesktop='rdesktop -g 1024x800'
 
-        # Source Linux-specific config
-        if [ -f ~/.bash_linux ]; then
-            source ~/.bash_linux
-        fi
         ;;
     *darwin*)
         alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
@@ -352,11 +370,6 @@ case $MACHTYPE in
         # live in ~/.bash_profile_personal, not here: they carry a private LAN
         # address, a username and an absolute home path. That file is sourced
         # near the end of this script and is never committed.
-
-        # Source macOS-specific config
-        if [ -f ~/.bash_osx ]; then
-            source ~/.bash_osx
-        fi
         ;;
     *cygwin*)
         # Cygwin-specific settings
@@ -381,13 +394,6 @@ alias gbp=gitBranchPush
 # EXTERNAL TOOLS
 # ====================
 
-# Python virtualenvwrapper
-if [[ -f /usr/local/bin/virtualenvwrapper.sh ]]; then
-    export WORKON_HOME=~/.virtualenvs
-    [[ ! -d $WORKON_HOME ]] && mkdir $WORKON_HOME
-    source /usr/local/bin/virtualenvwrapper.sh
-fi
-
 # direnv
 if command -v direnv &> /dev/null; then
     eval "$(direnv hook bash)"
@@ -401,13 +407,10 @@ if [ -n "$GCLOUD_SDK_ROOT" ]; then
     [ -f "$GCLOUD_SDK_ROOT/completion.bash.inc" ] && . "$GCLOUD_SDK_ROOT/completion.bash.inc"
 fi
 
-# Node Version Manager
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-# Ruby Version Manager
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+# nvm, rvm and virtualenvwrapper were removed: none of them is installed here,
+# they existed in bash only (so the shells disagreed), and per-language version
+# managers are superseded by direnv above plus mise/asdf. Re-add to ~/.profile,
+# not here, if one is ever needed -- that way every shell gets it.
 
 # Rust
 if [ -f "$HOME/.cargo/env" ]; then
@@ -418,16 +421,24 @@ fi
 # PERSONAL CONFIGURATIONS
 # ====================
 
-# Source personal configuration files
-if [ -f ~/.bash_profile_ps ]; then
-    source "$HOME/.bash_profile_ps"
+# Machine-specific settings live outside this repo. ~/.shell_local is the
+# shared hook -- POSIX, so zsh sources the same file -- and ~/.bashrc_local is
+# for anything genuinely bash-only.
+#
+# ~/.bash_profile_ps, ~/.bash_profile_do, ~/.bash_linux and ~/.bash_osx were
+# dropped: four separate hooks with no file behind any of them.
+# ~/.bash_profile_personal is still sourced because it exists on this machine;
+# move its contents to ~/.shell_local and it can go too.
+# A login bash already got ~/.shell_local via ~/.profile; a non-login
+# interactive bash (the norm on Linux) never reads .profile, so source it here.
+if [ -z "${_DOTFILES_PROFILE_SOURCED:-}" ] && [ -f "$HOME/.shell_local" ]; then
+    # shellcheck source=/dev/null
+    . "$HOME/.shell_local"
 fi
 
-if [ -f ~/.bash_profile_do ]; then
-    source "$HOME/.bash_profile_do"
-fi
-
-if [ -f ~/.bash_profile_personal ]; then
-    source "$HOME/.bash_profile_personal"
-fi
+for _local in "$HOME/.bashrc_local" "$HOME/.bash_profile_personal"; do
+    # shellcheck source=/dev/null
+    [ -f "$_local" ] && . "$_local"
+done
+unset _local
 

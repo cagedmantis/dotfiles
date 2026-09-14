@@ -13,3 +13,26 @@ link:
 
 adopt:
 	stow --adopt $(STOW_FLAGS) .
+
+# ====================
+# CHECKS
+# ====================
+
+# lint  -- Layer 1: parse and lint every config file. Fast; run it on save.
+# test  -- Layer 2: behavioural tests. Installs the configs into a throwaway
+#          $HOME and runs real shells against them, which is where the
+#          fresh-machine bugs actually show up.
+# ci    -- both, in the order that fails fastest.
+
+lint:
+	@scripts/lint.sh
+
+test:
+	@cd tests && go test ./...
+
+test-v:
+	@cd tests && go test -v ./...
+
+ci: lint test
+
+.PHONY: link adopt lint test test-v ci

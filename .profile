@@ -52,10 +52,16 @@ export PATH
 # This has lived in several places across machines; probe rather than hardcode.
 # Exported so the shell rc files can source the matching completion scripts
 # instead of each guessing a different location.
+#
+# $HOME/Downloads is deliberately NOT probed (see TODO #43). Whatever is found
+# here gets its bin/ put on PATH *and* has its completion.*.inc sourced by every
+# shell -- that is arbitrary code execution from the probed directory. A
+# browser's default download target is the last place that should be trusted
+# with it: a single drive-by download of a directory named google-cloud-sdk
+# would be enough. Install locations only.
 for _gcloud_dir in \
 	"$HOME/google-cloud-sdk" \
 	"$HOME/bin/google-cloud-sdk" \
-	"$HOME/Downloads/google-cloud-sdk" \
 	/opt/homebrew/share/google-cloud-sdk \
 	/usr/local/share/google-cloud-sdk
 do
@@ -104,3 +110,20 @@ if [ -f "$HOME/.cargo/env" ]; then
 	# shellcheck source=/dev/null
 	. "$HOME/.cargo/env"
 fi
+
+# ====================
+# LOCAL OVERRIDES
+# ====================
+
+# Machine-specific settings that must not be committed. Sourced last so it can
+# override anything above. POSIX, so bash and zsh share this one file; fish
+# has its own at ~/.config/fish/local.fish.
+if [ -f "$HOME/.shell_local" ]; then
+	# shellcheck source=/dev/null
+	. "$HOME/.shell_local"
+fi
+
+# Deliberately not exported. It tells an rc file in THIS shell that .profile
+# already ran, so ~/.shell_local is not sourced twice for a login shell. A
+# non-login interactive bash never reads .profile, and sources it itself.
+_DOTFILES_PROFILE_SOURCED=1
