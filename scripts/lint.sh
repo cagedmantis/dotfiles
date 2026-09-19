@@ -32,7 +32,12 @@ if have shellcheck; then
 		if shellcheck --shell=bash --exclude=SC1090,SC1091 "$f"; then ok "$f"; else bad "$f"; fi
 	done
 	if shellcheck --shell=sh --exclude=SC1090,SC1091 .profile; then ok ".profile"; else bad ".profile"; fi
-	if shellcheck --shell=sh scripts/lint.sh; then ok "scripts/lint.sh"; else bad "scripts/lint.sh"; fi
+	# Globbed, not named one by one: a new script must not be able to
+	# arrive without being linted.
+	for f in scripts/*.sh; do
+		[ -f "$f" ] || continue
+		if shellcheck --shell=sh "$f"; then ok "$f"; else bad "$f"; fi
+	done
 else
 	skip "bash and sh files" shellcheck
 fi

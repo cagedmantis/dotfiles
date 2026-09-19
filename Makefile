@@ -7,12 +7,35 @@
 # create real directories and link only the files.
 STOW_FLAGS := --no-folding --target=$(HOME)
 
+# A bare `make` prints the target list rather than silently stowing into $HOME.
+.DEFAULT_GOAL := help
+
+# ====================
+# HELP
+# ====================
+
+# Self-documenting: a target is listed here iff its rule line carries a `## `
+# comment, so the listing cannot drift from the file. Only the first makefile is
+# scanned, and awk is held to POSIX (BSD awk on macOS, gawk on Linux).
+help: ## Show this help
+	@printf 'Usage: make <target>\n\nTargets:\n'
+	@awk -F':[^#]*##[ 	]*' '/^[a-zA-Z0-9_.-]+:[^#]*##/ { printf "  %-8s %s\n", $$1, $$2 }' \
+		$(firstword $(MAKEFILE_LIST))
+	@printf '\nRun `make ci` before calling a change done.\n'
+
+# ====================
+# INSTALL
+# ====================
+
 # create links in the home directory for the files in this repo.
-link:
+link: ## Symlink this repo into $HOME (stow; safe, refuses on conflict)
 	stow $(STOW_FLAGS) .
 
-adopt:
+adopt: ## DESTRUCTIVE: pull $HOME's copies into this repo, overwriting it
 	stow --adopt $(STOW_FLAGS) .
+
+status: ## Has `make link` run on this machine? (read-only)
+	@scripts/status.sh
 
 # ====================
 # CHECKS
@@ -24,15 +47,15 @@ adopt:
 #          fresh-machine bugs actually show up.
 # ci    -- both, in the order that fails fastest.
 
-lint:
+lint: ## Layer 1: parse + shellcheck every config file (fast)
 	@scripts/lint.sh
 
-test:
+test: ## Layer 2: behavioural tests against a throwaway $HOME
 	@cd tests && go test ./...
 
-test-v:
+test-v: ## Layer 2, verbose
 	@cd tests && go test -v ./...
 
-ci: lint test
+ci: lint test ## lint then test, failing fast
 
-.PHONY: link adopt lint test test-v ci
+.PHONY: help link adopt status lint test test-v ci
