@@ -19,7 +19,7 @@ STOW_FLAGS := --no-folding --target=$(HOME)
 # scanned, and awk is held to POSIX (BSD awk on macOS, gawk on Linux).
 help: ## Show this help
 	@printf 'Usage: make <target>\n\nTargets:\n'
-	@awk -F':[^#]*##[ 	]*' '/^[a-zA-Z0-9_.-]+:[^#]*##/ { printf "  %-8s %s\n", $$1, $$2 }' \
+	@awk -F':[^#]*##[ 	]*' '/^[a-zA-Z0-9_.-]+:[^#]*##/ { printf "  %-12s %s\n", $$1, $$2 }' \
 		$(firstword $(MAKEFILE_LIST))
 	@printf '\nRun `make ci` before calling a change done.\n'
 
@@ -30,6 +30,9 @@ help: ## Show this help
 # create links in the home directory for the files in this repo.
 link: ## Symlink this repo into $HOME (stow; safe, refuses on conflict)
 	stow $(STOW_FLAGS) .
+
+force-link: ## Like link, but first renames anything in the way to <name>.bak
+	@scripts/force-link.sh
 
 adopt: ## DESTRUCTIVE: pull $HOME's copies into this repo, overwriting it
 	stow --adopt $(STOW_FLAGS) .
@@ -58,4 +61,4 @@ test-v: ## Layer 2, verbose
 
 ci: lint test ## lint then test, failing fast
 
-.PHONY: help link adopt status lint test test-v ci
+.PHONY: help link force-link adopt status lint test test-v ci

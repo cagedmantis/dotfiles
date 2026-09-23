@@ -77,8 +77,18 @@ source ~/.zshrc
 stow --target=$HOME .
 ```
 
+#### Replace Existing Files
+If `make link` refuses because files already exist in `$HOME`, move them aside
+to `<name>.bak` and link in one step:
+```bash
+make force-link
+```
+It never overwrites: if a `.bak` already exists it stops without changing
+anything, and if stow still fails it undoes the renames.
+
 #### Adopt Existing Files
-If you have existing dotfiles you want to replace:
+To pull your existing `$HOME` copies *into this repo*, overwriting the tracked
+versions (review with `git diff` afterwards):
 ```bash
 make adopt
 ```
@@ -205,8 +215,8 @@ mutating the repo on every prompt.
 ### Stow Conflicts
 If you get conflicts when running `make link`:
 ```bash
-# Backup existing files and adopt them
-make adopt
+# Rename the conflicting files to *.bak, then link
+make force-link
 ```
 
 ### Permission Issues

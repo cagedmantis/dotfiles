@@ -20,23 +20,15 @@ set -u
 
 cd "$(dirname "$0")/.." || exit 1
 repo=$(pwd -P)
+# shellcheck source=scripts/lib.sh
+. scripts/lib.sh
 
 if ! command -v stow >/dev/null 2>&1; then
 	echo "status: UNKNOWN -- stow is not installed, so the file list cannot be determined"
 	exit 1
 fi
 
-# The authoritative list of what `make link` installs is whatever stow says it
-# would install; deriving it here would mean reimplementing .stow-local-ignore
-# and drifting from it. A throwaway target keeps this a dry run against a
-# pristine tree, and overriding HOME stops stow reading a previously installed
-# ~/.stow-global-ignore -- the file list must not depend on the machine's state.
-scratch="${TMPDIR:-/tmp}/dotfiles-status-$$"
-mkdir -p "$scratch" || exit 1
-# 2>&1 is required, not sloppy: stow writes its dry-run plan to stderr.
-expected=$(HOME="$scratch" stow --no --verbose=2 --no-folding --target="$scratch" . 2>&1 \
-	| sed -n 's/^LINK: //p' | sed 's/ =>.*//')
-rm -rf "$scratch"
+expected=$(expected_files)
 
 if [ -z "$expected" ]; then
 	echo "status: UNKNOWN -- stow reported no files to link; is this the package root?"
@@ -50,21 +42,6 @@ problems=''
 
 note() { problems="$problems$1
 "; }
-
-# Resolves a symlink's target to an absolute path without readlink -f, which
-# BSD readlink lacks. Stow writes relative links (~/.zshrc -> Code/GitHub/
-# dotfiles/.zshrc), so the target is resolved against the link's own directory.
-resolve() {
-	_link=$1
-	_target=$(readlink "$_link") || return 1
-	case $_target in
-	/*) printf '%s\n' "$_target" ;;
-	*)
-		_dir=$(cd "$(dirname "$_link")" 2>/dev/null && cd "$(dirname "$_target")" 2>/dev/null && pwd -P) || return 1
-		printf '%s/%s\n' "$_dir" "$(basename "$_target")"
-		;;
-	esac
-}
 
 # read -r, not read: a backslash in a filename must survive.
 while IFS= read -r f; do
@@ -113,9 +90,10 @@ fi
 
 # Conflicts change the advice: stow refuses the whole install rather than
 # overwrite, so `make link` alone will not fix them. `make adopt` would, by
-# overwriting the repo with $HOME's copy -- which is why it is not suggested.
+# overwriting the repo with $HOME's copy -- which is why it is not suggested;
+# `make force-link` keeps both copies.
 if [ "$conflicts" -gt 0 ]; then
-	printf '        %d path(s) hold a real file; move them aside, then run `make link`\n' "$conflicts"
+	printf '        %d path(s) hold a real file; run `make force-link` to move them to *.bak and link\n' "$conflicts"
 elif [ "$rc" -ne 0 ]; then
 	echo "        run \`make link\` to finish the install"
 fi

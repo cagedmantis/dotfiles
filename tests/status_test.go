@@ -133,6 +133,9 @@ func TestStatusDistinguishesConflictFromMissing(t *testing.T) {
 	if code == 0 {
 		t.Errorf("conflicting $HOME should exit non-zero, got 0:\n%s", out)
 	}
+	if !strings.Contains(out, "make force-link") {
+		t.Errorf("a conflict should point at `make force-link`, got:\n%s", out)
+	}
 }
 
 // TestStatusIgnoresForeignSymlinks checks that a link to some other tree is not
