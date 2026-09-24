@@ -34,6 +34,9 @@ link: ## Symlink this repo into $HOME (stow; safe, refuses on conflict)
 force-link: ## Like link, but first renames anything in the way to <name>.bak
 	@scripts/force-link.sh
 
+tmux-plugins: ## Install the tmux plugins at their pinned commits (network)
+	@scripts/tmux-plugins.sh
+
 adopt: ## DESTRUCTIVE: pull $HOME's copies into this repo, overwriting it
 	stow --adopt $(STOW_FLAGS) .
 
@@ -49,6 +52,8 @@ status: ## Has `make link` run on this machine? (read-only)
 #          $HOME and runs real shells against them, which is where the
 #          fresh-machine bugs actually show up.
 # ci    -- both, in the order that fails fastest.
+# test-network -- installs the real tmux plugins from GitHub and loads them.
+#          Kept out of ci so ci stays offline and hermetic.
 
 lint: ## Layer 1: parse + shellcheck every config file (fast)
 	@scripts/lint.sh
@@ -61,4 +66,7 @@ test-v: ## Layer 2, verbose
 
 ci: lint test ## lint then test, failing fast
 
-.PHONY: help link force-link adopt status lint test test-v ci
+test-network: ## Tests that need the network: pinned tmux plugins load
+	@cd tests && DOTFILES_NETWORK_TESTS=1 go test -count=1 -run Network ./...
+
+.PHONY: help link force-link tmux-plugins adopt status lint test test-v ci test-network

@@ -14,10 +14,9 @@ import (
 //
 // $HOME points at the sandbox, which deliberately has no ~/.tmux/plugins/tpm.
 // That isolates the configuration's own settings from anything tpm would load,
-// which is what these assertions are about. The interaction between the
-// hand-written status bar and the catppuccin plugin, and tmux-sensible
-// overriding settings defined above it, are TODO #24 and #26 -- still open, and
-// they need a plugins-present variant of this harness once they are fixed.
+// which is what these assertions are about. The plugins-present counterpart is
+// TestNetworkTmuxLoadsPinnedPlugins, which needs the network and so runs only
+// under `make test-network`.
 func tmuxServer(t *testing.T) func(args ...string) string {
 	t.Helper()
 	if _, err := exec.LookPath("tmux"); err != nil {

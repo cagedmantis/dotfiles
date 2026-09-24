@@ -29,6 +29,9 @@ This repository contains my personal dotfiles including shell configurations (ba
 
 - Git
 - GNU Stow
+- tmux 3.2 or newer (the config uses `terminal-features` and `extended-keys`)
+- On Linux, a clipboard tool for tmux-yank: `xclip`, `xsel`, or `wl-copy` (from
+  `wl-clipboard`) on Wayland. macOS has `pbcopy` built in.
 
 #### Install GNU Stow
 
@@ -60,7 +63,15 @@ cd ~/dotfiles
 make link
 ```
 
-3. Reload your shell:
+3. Install the tmux plugins (tpm, catppuccin, tmux-yank):
+```bash
+make tmux-plugins
+```
+Each plugin is checked out at the commit pinned in `scripts/tmux-plugins.txt`.
+Rerun it after changing a pin. Skip it and tmux still starts, but with the
+default status bar and no clipboard integration.
+
+4. Reload your shell:
 ```bash
 # For bash
 source ~/.bashrc
@@ -124,7 +135,11 @@ make adopt
 ### Tmux Configuration
 - **Custom prefix**: `Ctrl-g` (better for Emacs users)
 - **Intuitive bindings**: `|` for horizontal split, `-` for vertical split
-- **Enhanced status bar**: Shows session, user, and system information
+- **Enhanced status bar**: Catppuccin (mocha) theme, via a plugin
+- **Clipboard**: tmux-yank copies to the system clipboard, including over SSH
+- **Pinned plugins**: installed by `make tmux-plugins` at exact commits, not
+  the latest code. Avoid tpm's `prefix + I` and `prefix + U`, which fetch the
+  latest code; change the pin in `scripts/tmux-plugins.txt` instead
 - **Mouse support**: Enabled for modern terminal interaction
 
 ## Customization
@@ -231,9 +246,13 @@ Install missing tools as needed:
 # macOS
 brew install git stow tmux
 
-# Linux
-sudo apt-get install git stow tmux
+# Linux (add xsel or wl-clipboard instead of xclip if you prefer)
+sudo apt-get install git stow tmux xclip
 ```
+
+### Tmux Has a Plain Status Bar
+The plugins are not installed. Run `make tmux-plugins`, then reload with
+`tmux source-file ~/.tmux.conf`.
 
 ## License
 

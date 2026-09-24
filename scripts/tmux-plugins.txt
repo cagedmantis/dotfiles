@@ -1,0 +1,17 @@
+# tmux plugins installed by `make tmux-plugins`, one per line:
+#
+#   <directory>  <git url>  <commit>
+#
+# The directory is the repo name, which is where tpm looks for a plugin named
+# owner/repo in a `set -g @plugin` line of .tmux.conf. Every @plugin line must
+# have an entry here and vice versa; tests/tmuxplugins_test.go enforces it.
+#
+# Pinned by full commit rather than tag because the catppuccin fork has no tags.
+# To upgrade, change the commit and run `make tmux-plugins` again. Updating from
+# inside tmux (prefix + U) moves the plugins off these pins until the next run.
+# v3.1.0
+tpm              https://github.com/tmux-plugins/tpm                 7bdb7ca33c9cc6440a600202b50142f401b6fe21
+# master as of 2026-09-23; the fork is untagged
+catppuccin-tmux  https://github.com/dreamsofcode-io/catppuccin-tmux  b4e0715356f820fc72ea8e8baf34f0f60e891718
+# v2.3.0
+tmux-yank        https://github.com/tmux-plugins/tmux-yank           fd8000238b324005389076486a2e6e03dba1c64f
