@@ -326,3 +326,7 @@ fi
 # environment shared with sh and bash. This is for zsh-only interactive
 # settings that must land after everything above.
 [[ -f "$HOME/.zshrc_local" ]] && source "$HOME/.zshrc_local"
+
+export WASMTIME_HOME="$HOME/.wasmtime"
+
+export PATH="$WASMTIME_HOME/bin:$PATH"
