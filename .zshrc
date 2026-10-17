@@ -266,6 +266,11 @@ case $OSTYPE in
         if [[ -z $DISPLAY && -z $SSH_CONNECTION ]]; then
             export DISPLAY=:0.0
         fi
+        # Adopt the systemd user agent (Debian 13+): it only exports
+        # SSH_AUTH_SOCK to the systemd user environment, which SSH logins miss.
+        if [[ -z $SSH_AUTH_SOCK && -S $XDG_RUNTIME_DIR/openssh_agent ]]; then
+            export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/openssh_agent
+        fi
         alias apt-get='sudo apt-get'
         alias apt-cache='sudo apt-cache'
         alias aptitude='sudo aptitude'
@@ -326,7 +331,3 @@ fi
 # environment shared with sh and bash. This is for zsh-only interactive
 # settings that must land after everything above.
 [[ -f "$HOME/.zshrc_local" ]] && source "$HOME/.zshrc_local"
-
-export WASMTIME_HOME="$HOME/.wasmtime"
-
-export PATH="$WASMTIME_HOME/bin:$PATH"

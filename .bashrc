@@ -224,6 +224,13 @@ export PS1="\[\033[01;32m\]\u\[\033[01;33m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\0
 # macOS sets SSH_AUTH_SOCK via launchd, so this is a no-op there; it matters on
 # Linux consoles and detached tmux sessions. Keys are deliberately NOT added
 # here -- put `AddKeysToAgent yes` in ~/.ssh/config so they load on first use.
+#
+# Prefer the systemd user agent (Debian 13+) when its socket exists. It only
+# exports SSH_AUTH_SOCK into the systemd user environment, which SSH logins
+# never see, so without this every SSH login would spawn a second agent.
+if [ -z "$SSH_AUTH_SOCK" ] && [ -S "$XDG_RUNTIME_DIR/openssh_agent" ]; then
+    export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/openssh_agent"
+fi
 if [ -z "$SSH_AUTH_SOCK" ] && command -v ssh-agent >/dev/null 2>&1; then
     _ssh_env="${XDG_RUNTIME_DIR:-$HOME/.cache}/ssh-agent.env"
     # Adopt the recorded agent if it is still alive.
@@ -441,4 +448,3 @@ for _local in "$HOME/.bashrc_local" "$HOME/.bash_profile_personal"; do
     [ -f "$_local" ] && . "$_local"
 done
 unset _local
-

@@ -41,6 +41,9 @@ path_append "$HOME/bin"
 # ~/.local/bin ends up first -- matching the previous ordering in .bashrc.
 path_prepend /opt/local/sbin
 path_prepend /opt/local/bin
+WASMTIME_HOME="$HOME/.wasmtime"
+export WASMTIME_HOME
+path_prepend "$WASMTIME_HOME/bin"
 path_prepend "$HOME/.local/bin"
 
 export PATH

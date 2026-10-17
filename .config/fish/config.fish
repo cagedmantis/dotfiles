@@ -21,6 +21,7 @@ set -gx EDITOR "emacsclient -t"
 set -gx VISUAL $EDITOR
 set -gx BROWSER google-chrome
 set -gx ENABLE_LSP_TOOL 1
+set -gx WASMTIME_HOME $HOME/.wasmtime
 
 # PATH. fish_add_path is idempotent and skips directories that do not exist,
 # which is why no explicit guards are needed here.
@@ -31,7 +32,7 @@ set -gx ENABLE_LSP_TOOL 1
 # /usr/bin, and this machine would disagree with a fresh one. -P edits $PATH
 # directly, giving the same precedence as ~/.profile.
 fish_add_path -aP /usr/local/sbin /usr/local/go/bin $HOME/go/bin $HOME/bin
-fish_add_path -P /opt/local/sbin /opt/local/bin $HOME/.cargo/bin $HOME/.local/bin
+fish_add_path -P /opt/local/sbin /opt/local/bin $HOME/.cargo/bin $WASMTIME_HOME/bin $HOME/.local/bin
 
 # Known, harmless divergence from ~/.profile: rustup drops a conf.d/rustup.fish
 # that sources ~/.cargo/env.fish, and fish runs conf.d/ *before* config.fish.
@@ -284,6 +285,11 @@ switch (uname)
         # DISPLAY breaks `ssh -X` (which sets localhost:10.0) and Wayland.
         if test -z "$DISPLAY" -a -z "$SSH_CONNECTION"
             set -gx DISPLAY :0.0
+        end
+        # Adopt the systemd user agent (Debian 13+): it only exports
+        # SSH_AUTH_SOCK to the systemd user environment, which SSH logins miss.
+        if test -z "$SSH_AUTH_SOCK" -a -S "$XDG_RUNTIME_DIR/openssh_agent"
+            set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/openssh_agent"
         end
         abbr -a apt-get 'sudo apt-get'
         abbr -a apt-cache 'sudo apt-cache'
