@@ -165,6 +165,17 @@ vcs_prompt_info() {
 NEWLINE=$'\n'
 PROMPT="%F{10}%n%f%F{11}@%f%F{10}%m%f%F{10}: %f%F{51}%~%f\$(vcs_prompt_info)%F{10}${NEWLINE}> %f"
 
+# Turn terminal mouse reporting off before every prompt. tmux (mouse on),
+# vim, htop etc. enable it and disable it on a clean exit; when one dies
+# instead -- most often a dropped SSH session to a remote tmux -- the terminal
+# keeps reporting, and every mouse move types "35;120;21M" garbage at the
+# prompt. A prompt never wants mouse input, so this is always safe, and inside
+# tmux it only touches the pane, not tmux's own mouse mode.
+# Modes: 1000 click, 1002 drag, 1003 any-motion, 1006 SGR, 1015 urxvt.
+_reset_mouse_tracking() { printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?1015l'; }
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _reset_mouse_tracking
+
 # ====================
 # ENVIRONMENT
 # ====================

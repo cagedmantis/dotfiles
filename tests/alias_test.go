@@ -40,6 +40,10 @@ var internalNames = map[string]bool{
 	"compaudit": true, "compdef": true, "compdump": true,
 	"compinit": true, "compinstall": true, "getent": true, "zrecompile": true,
 
+	// zsh's hook registrar, pulled in by `autoload -Uz add-zsh-hook` for the
+	// mouse-tracking reset. Also zsh's own, not ours.
+	"add-zsh-hook": true,
+
 	// fish machinery that appears once a config is loaded.
 	"fish_sigtrap_handler": true, "fish_prompt": true, "fish_mode_prompt": true,
 }

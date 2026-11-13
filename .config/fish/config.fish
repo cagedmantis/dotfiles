@@ -188,6 +188,17 @@ if status is-interactive
         echo -n " "(set_color brmagenta)"("(set_color brcyan)"$bookmark@$change$markers"(set_color brmagenta)")"(set_color normal)
     end
 
+    # Turn terminal mouse reporting off before every prompt. tmux (mouse on),
+    # vim, htop etc. enable it and disable it on a clean exit; when one dies
+    # instead -- most often a dropped SSH session to a remote tmux -- the
+    # terminal keeps reporting, and every mouse move types "35;120;21M"
+    # garbage at the prompt. A prompt never wants mouse input, so this is
+    # always safe, and inside tmux it only touches the pane.
+    # Modes: 1000 click, 1002 drag, 1003 any-motion, 1006 SGR, 1015 urxvt.
+    function _reset_mouse_tracking --on-event fish_prompt
+        printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?1015l'
+    end
+
     function fish_prompt
         set -l vcs_info ""
         switch (_vcs_kind)

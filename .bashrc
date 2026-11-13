@@ -210,6 +210,21 @@ parse_vcs_info() {
 # Colorful prompt with git info
 export PS1="\[\033[01;32m\]\u\[\033[01;33m\]@\[\033[01;32m\]\h\[\033[00m\]: \[\033[01;36m\]\w\[\033[00m\] \[\033[01;34m\]\$(parse_vcs_info)\[\033[00m\]\[\033[01;32m\]\n$ \[\033[00m\]"
 
+# Turn terminal mouse reporting off before every prompt. tmux (mouse on),
+# vim, htop etc. enable it and disable it on a clean exit; when one dies
+# instead -- most often a dropped SSH session to a remote tmux -- the terminal
+# keeps reporting, and every mouse move types "35;120;21M" garbage at the
+# prompt. A prompt never wants mouse input, so this is always safe, and inside
+# tmux it only touches the pane, not tmux's own mouse mode.
+# Modes: 1000 click, 1002 drag, 1003 any-motion, 1006 SGR, 1015 urxvt.
+# Prepended once (re-sourcing .bashrc must not stack copies); direnv's hook,
+# added later, prepends itself the same way and coexists with this.
+_reset_mouse_tracking() { printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?1015l'; }
+case ";${PROMPT_COMMAND:-};" in
+    *";_reset_mouse_tracking;"*) ;;
+    *) PROMPT_COMMAND="_reset_mouse_tracking${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;;
+esac
+
 # ====================
 # SSH AGENT
 # ====================

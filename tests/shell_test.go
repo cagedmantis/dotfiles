@@ -427,3 +427,44 @@ func TestGcloudProbeSkipsDownloads(t *testing.T) {
 		})
 	}
 }
+
+// TestMouseTrackingResetHook guards the fix for stray mouse reports at the
+// prompt: a program that enabled terminal mouse tracking (tmux with mouse on,
+// vim, ...) and died without disabling it left the terminal typing
+// "35;120;21M" on every mouse move. Each interactive shell must register a
+// prompt hook that switches every mouse mode back off.
+func TestMouseTrackingResetHook(t *testing.T) {
+	home := sandbox(t)
+	const want = "\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?1015l"
+	cases := []struct{ shellName, script string }{
+		// Sourcing .bashrc a second time also checks the hook is not stacked.
+		{"bash", `source ~/.bashrc >/dev/null 2>&1
+			n=$(printf '%s' "$PROMPT_COMMAND" | grep -o _reset_mouse_tracking | wc -l)
+			[ "$n" -eq 1 ] && echo registered
+			_reset_mouse_tracking`},
+		{"zsh", `(( ${precmd_functions[(Ie)_reset_mouse_tracking]} )) && echo registered
+			_reset_mouse_tracking`},
+		{"fish", `functions _reset_mouse_tracking | string match -q -- '*--on-event fish_prompt*'; and echo registered
+			_reset_mouse_tracking`},
+	}
+	for _, c := range cases {
+		t.Run(c.shellName, func(t *testing.T) {
+			var s shell
+			for _, sh := range shells {
+				if sh.name == c.shellName {
+					s = sh
+				}
+			}
+			if _, err := lookShell(s); err != nil {
+				t.Skip(c.shellName + " not installed")
+			}
+			out, _ := runShell(t, s, home, c.script)
+			if !strings.Contains(out, "registered") {
+				t.Errorf("%s: _reset_mouse_tracking is not registered exactly once as a prompt hook\ngot: %q", c.shellName, out)
+			}
+			if !strings.Contains(out, want) {
+				t.Errorf("%s: _reset_mouse_tracking does not emit the mouse-off sequences\nwant: %q\ngot:  %q", c.shellName, want, out)
+			}
+		})
+	}
+}
