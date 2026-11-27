@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// TestPathContainsExpectedDirs guards TODO #12 and #13: fish had neither ~/bin
+// TestPathContainsExpectedDirs guards a past bug: fish had neither ~/bin
 // nor ~/go/bin, and .profile contributed nothing at all, so `sh -l` and every
 // fish shell were missing directories the other shells had.
 func TestPathContainsExpectedDirs(t *testing.T) {
@@ -30,7 +30,7 @@ func TestPathContainsExpectedDirs(t *testing.T) {
 	}
 }
 
-// TestPathHasNoDuplicates guards TODO #10. PATH used to be appended to
+// TestPathHasNoDuplicates guards a past bug: PATH used to be appended to
 // unconditionally by files that run on every shell invocation, so each level of
 // nesting doubled it -- zsh reached 40 entries at depth three.
 func TestPathHasNoDuplicates(t *testing.T) {
@@ -51,7 +51,7 @@ func TestPathHasNoDuplicates(t *testing.T) {
 	}
 }
 
-// TestPathStableWhenNested guards TODO #10 in the shape it actually had:
+// TestPathStableWhenNested guards a past bug in the shape it actually had:
 // unconditional PATH appends in files that run on every shell invocation, so
 // each level of nesting doubled PATH. Nesting is the normal case under tmux,
 // make, or an editor's terminal.
@@ -115,7 +115,7 @@ func TestPathStableWhenNested(t *testing.T) {
 	}
 }
 
-// TestNoStderrOnStartup guards TODO #4 and #8: an unguarded `. ~/.cargo/env`
+// TestNoStderrOnStartup guards a past bug: an unguarded `. ~/.cargo/env`
 // and a bash-4-only `shopt -s dirspell` each printed an error on every single
 // interactive start.
 func TestNoStderrOnStartup(t *testing.T) {
@@ -130,7 +130,7 @@ func TestNoStderrOnStartup(t *testing.T) {
 	}
 }
 
-// TestTermNotOverridden guards TODO #14. Exporting TERM from an rc file
+// TestTermNotOverridden guards a past bug: exporting TERM from an rc file
 // clobbers whatever the terminal emulator set, which defeated tmux's
 // tmux-256color and broke TRAMP and `ssh host cmd`, both of which use dumb.
 func TestTermNotOverridden(t *testing.T) {
@@ -145,7 +145,7 @@ func TestTermNotOverridden(t *testing.T) {
 	}
 }
 
-// TestEditorIsConsistent guards TODO #18, where EDITOR was set twice to two
+// TestEditorIsConsistent guards a past bug, where EDITOR was set twice to two
 // different values and the one non-interactive tools actually saw pointed at an
 // absolute Homebrew path that does not exist on Linux.
 func TestEditorIsConsistent(t *testing.T) {
@@ -195,7 +195,7 @@ func TestAlternateEditorStartsDaemon(t *testing.T) {
 	}
 }
 
-// TestNonInteractivePathMatches guards TODO #11. PATH used to be built in
+// TestNonInteractivePathMatches guards a past bug: PATH used to be built in
 // .bashrc and .zshrc, which run only for interactive shells, so `ssh host cmd`,
 // cron and make subshells saw a different PATH from the terminal.
 func TestNonInteractivePathMatches(t *testing.T) {
@@ -284,7 +284,7 @@ func TestFishInteractiveGuard(t *testing.T) {
 	}
 
 	// Commands usable from scripts must stay outside the guard.
-	for _, fn := range []string{"gbp", "chromekill"} {
+	for _, fn := range []string{"gbp"} {
 		out, _ := runShellArgs(t, fish, home, []string{"-c", "functions -q " + fn + "; and echo yes"})
 		if strings.TrimSpace(out) != "yes" {
 			t.Errorf("%s is not available to non-interactive fish; it is a command, not an interactive alias", fn)
@@ -330,7 +330,7 @@ func TestLocalOverrideHook(t *testing.T) {
 	}
 }
 
-// TestNoUntrustedSourceDirs guards TODO #43. The gcloud probe put whatever it
+// TestNoUntrustedSourceDirs guards a past bug: the gcloud probe put whatever it
 // found on PATH and then *sourced* that directory's completion.*.inc from every
 // shell, which is arbitrary code execution from the probed location. One of the
 // probed locations was $HOME/Downloads -- a browser's default target, where a

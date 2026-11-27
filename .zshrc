@@ -84,7 +84,7 @@ _vcs_kind() {
 # "(detached)"; "1"/"2" lines carry a two-character XY status where X is the
 # staged state and Y the unstaged one, "." meaning unchanged; "u" lines are
 # unmerged; "?" lines are untracked.
-# Hardening (see TODO #42): git reads the *repository's own* .git/config
+# Hardening: git reads the *repository's own* .git/config
 # before doing anything, and core.fsmonitor is a command git executes. A repo
 # you merely `cd` into -- an unpacked tarball, a cloned PR branch -- therefore
 # gets arbitrary code execution once per prompt render. Verified: 1 execution
@@ -258,13 +258,6 @@ alias ec="emacsclient -t"
 
 # Utility functions
 alias weather='curl https://wttr.in/nyc'
-# xargs -r is GNU-only, so filter empties with a while-read loop instead:
-# bare `xargs kill` runs `kill` with no arguments when nothing matches.
-chromekill() {
-    ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process \
-        | tr -s ' ' | cut -d ' ' -f2 \
-        | while read -r _pid; do [[ -n $_pid ]] && kill "$_pid"; done
-}
 
 # ====================
 # OS-SPECIFIC CONFIGURATION
@@ -282,10 +275,6 @@ case $OSTYPE in
         if [[ -z $SSH_AUTH_SOCK && -S $XDG_RUNTIME_DIR/openssh_agent ]]; then
             export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/openssh_agent
         fi
-        alias apt-get='sudo apt-get'
-        alias apt-cache='sudo apt-cache'
-        alias aptitude='sudo aptitude'
-        alias rdesktop='rdesktop -g 1024x800'
         ;;
     *darwin*)
         alias lockscreen='pmset displaysleepnow'
@@ -293,12 +282,6 @@ case $OSTYPE in
         if ! ssh-add -l >/dev/null 2>&1; then
             ssh-add -q --apple-load-keychain 2>/dev/null || ssh-add -q -A 2>/dev/null
         fi
-        ;;
-    *cygwin*)
-        # Cygwin-specific settings can go here
-        ;;
-    *)
-        # Default settings for other systems
         ;;
 esac
 

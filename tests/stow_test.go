@@ -12,7 +12,7 @@ import (
 
 // wantLinks is the complete set of files `make link` may place in $HOME.
 //
-// This is an allow-list on purpose. The bug it guards (TODO #1) was that GNU
+// This is an allow-list on purpose. The bug it guards was that GNU
 // Stow only reads <package>/.stow-local-ignore or ~/.stow-global-ignore, and
 // this repo shipped a .stow-global-ignore *inside the package*, where stow
 // never looks. On a fresh machine that silently symlinked ~/.bash_history,
@@ -20,7 +20,6 @@ import (
 // A deny-list would have to predict each new stray file; an allow-list fails
 // closed the moment anything unexpected appears.
 var wantLinks = []string{
-	".bash_logout",
 	".bash_profile",
 	".bashrc",
 	".config/fish/config.fish",
@@ -98,7 +97,7 @@ func TestStowIgnoresSensitiveFiles(t *testing.T) {
 	}
 }
 
-// TestStowDoesNotFoldDirectories guards TODO #2. Without --no-folding, stow
+// TestStowDoesNotFoldDirectories guards a past bug: without --no-folding, stow
 // symlinks a whole directory when the target does not already exist, so
 // ~/.config/fish becomes a link into the repo and fish then writes
 // fish_variables, fish_history and generated completions straight into git.

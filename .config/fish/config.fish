@@ -45,7 +45,7 @@ fish_add_path -P /opt/local/sbin /opt/local/bin $HOME/.cargo/bin $WASMTIME_HOME/
 # Google Cloud SDK: probe the locations this has lived in, matching ~/.profile.
 # $HOME/Downloads is deliberately not probed -- whatever is found gets its
 # completion.fish.inc sourced by every shell, and a browser download target
-# must not be trusted with that (TODO #43).
+# must not be trusted with that.
 for _gcloud_dir in $HOME/google-cloud-sdk $HOME/bin/google-cloud-sdk \
         /opt/homebrew/share/google-cloud-sdk \
         /usr/local/share/google-cloud-sdk
@@ -101,7 +101,7 @@ if status is-interactive
     #
     # if/else rather than switch: fish treats "?" in a case pattern as a
     # single-character wildcard even when quoted.
-    # Hardening (see TODO #42): git reads the *repository's own* .git/config
+    # Hardening: git reads the *repository's own* .git/config
     # before doing anything, and core.fsmonitor is a command git executes. A repo
     # you merely `cd` into -- an unpacked tarball, a cloned PR branch -- therefore
     # gets arbitrary code execution once per prompt render. Verified: 1 execution
@@ -302,9 +302,6 @@ switch (uname)
         if test -z "$SSH_AUTH_SOCK" -a -S "$XDG_RUNTIME_DIR/openssh_agent"
             set -gx SSH_AUTH_SOCK "$XDG_RUNTIME_DIR/openssh_agent"
         end
-        abbr -a apt-get 'sudo apt-get'
-        abbr -a apt-cache 'sudo apt-cache'
-        abbr -a aptitude 'sudo aptitude'
     case Darwin
         alias lockscreen 'pmset displaysleepnow'
         # Only load keychain keys if the agent has none yet; quiet, never
@@ -318,15 +315,6 @@ end
 # ====================
 # FUNCTIONS
 # ====================
-
-# xargs -r is GNU-only, so filter empties explicitly: bare `xargs kill` runs
-# `kill` with no arguments when nothing matches.
-function chromekill --description 'Kill hung Chrome renderer processes'
-    for pid in (ps ux | grep '[C]hrome Helper --type=renderer' \
-            | grep -v extension-process | tr -s ' ' | cut -d ' ' -f2)
-        test -n "$pid"; and kill $pid
-    end
-end
 
 function gbp --description 'Create and push a new git branch'
     git checkout -b $argv[1]

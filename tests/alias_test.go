@@ -21,7 +21,7 @@ var noConfigArgs = map[string][]string{
 var internalNames = map[string]bool{
 	// Prompt helpers. Each shell names these differently -- bash
 	// parse_git_branch, zsh git_prompt_info, fish _git_prompt_info -- which is
-	// itself drift, tracked under "Prompt implementation" in TODO.md. Only fish
+	// itself drift worth unifying one day. Only fish
 	// uses the underscore convention that would have filtered them
 	// automatically.
 	"parse_git_branch": true, "parse_jj_info": true, "parse_vcs_info": true,
@@ -53,12 +53,9 @@ var internalNames = map[string]bool{
 // as a failure rather than as a surprise months later. The value is the reason,
 // kept here because this is where someone will be standing when it fails.
 var knownDivergence = map[string]string{
-	"docker-create-f": "bash only; docker-machine was deprecated in 2021 and its vmwarefusion/virtualbox drivers do not work on Apple Silicon (TODO #39 removes these)",
-	"docker-create-v": "bash only; same as docker-create-f",
-	"emacs":           "bash only; a macOS-specific alias to the GUI Emacs.app bundle, which has no meaning on Linux or under fish",
-	"screen":          "bash only; legacy TERM wrapper kept for the rare screen session",
-	"vboxmanage":      "bash only; macOS path to the VirtualBox bundle",
-	"gitBranchPush":   "bash only; the long-form name behind the gbp alias. gbp itself is the interface and is present in all three shells",
+	"emacs":         "bash only; a macOS-specific alias to the GUI Emacs.app bundle, which has no meaning on Linux or under fish",
+	"screen":        "bash only; legacy TERM wrapper kept for the rare screen session",
+	"gitBranchPush": "bash only; the long-form name behind the gbp alias. gbp itself is the interface and is present in all three shells",
 }
 
 // configuredNames returns the alias and function names this repository adds to
@@ -155,7 +152,7 @@ func resolveKinds(t *testing.T, s shell, home string, names []string) map[string
 }
 
 // TestAliasParity asserts the user-facing command set stays in sync across
-// bash, zsh and fish. TODO's parity matrix found kubectl completion, nvm, rvm
+// bash, zsh and fish. A cross-shell audit found kubectl completion, nvm, rvm
 // and virtualenvwrapper in bash only, and the git shortcuts implemented three
 // different ways; this keeps new drift visible.
 func TestAliasParity(t *testing.T) {
@@ -228,7 +225,7 @@ func sortedKeys(m map[string]bool) []string {
 	return out
 }
 
-// TestListAliasesMatchPlatform guards TODO #16. `-G` means "colour" on BSD ls
+// TestListAliasesMatchPlatform guards a past bug: `-G` means "colour" on BSD ls
 // but "suppress the group column" on GNU coreutils, so the listing aliases must
 // choose their flags per platform. zsh hardcoded -G for every shell, and fish
 // probed correctly for `ls` but still hardcoded -G in la/l/ll.

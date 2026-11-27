@@ -27,9 +27,21 @@ help: ## Show this help
 # INSTALL
 # ====================
 
+# Fails with a readable message instead of make's "stow: No such file or
+# directory". The scripts carry the same check for themselves.
+REQUIRE_STOW = @command -v stow >/dev/null 2>&1 || { \
+	echo "stow is not installed; see README.md, Install GNU Stow" >&2; exit 1; }
+
+install: link tmux-plugins status ## First-time setup: link, install tmux plugins, report status
+
 # create links in the home directory for the files in this repo.
 link: ## Symlink this repo into $HOME (stow; safe, refuses on conflict)
+	$(REQUIRE_STOW)
 	stow $(STOW_FLAGS) .
+
+unlink: ## Remove the symlinks `make link` created (leaves real files alone)
+	$(REQUIRE_STOW)
+	stow -D $(STOW_FLAGS) .
 
 force-link: ## Like link, but first renames anything in the way to <name>.bak
 	@scripts/force-link.sh
@@ -37,8 +49,17 @@ force-link: ## Like link, but first renames anything in the way to <name>.bak
 tmux-plugins: ## Install the tmux plugins at their pinned commits (network)
 	@scripts/tmux-plugins.sh
 
-adopt: ## DESTRUCTIVE: pull $HOME's copies into this repo, overwriting it
+# Guarded: --adopt moves $HOME's copies over the tracked files with no prompt.
+# Afterwards the diff is printed, since that is the review step that matters.
+adopt: ## DESTRUCTIVE: pull $HOME's copies into this repo (needs CONFIRM=1)
+	@if [ "$(CONFIRM)" != 1 ]; then \
+		echo "adopt overwrites this repo's files with the copies in $(HOME)." >&2; \
+		echo "Rerun as: make adopt CONFIRM=1   (then review with git diff)" >&2; \
+		exit 1; \
+	fi
+	$(REQUIRE_STOW)
 	stow --adopt $(STOW_FLAGS) .
+	@git --no-pager diff --stat
 
 status: ## Has `make link` run on this machine? (read-only)
 	@scripts/status.sh
@@ -69,4 +90,4 @@ ci: lint test ## lint then test, failing fast
 test-network: ## Tests that need the network: pinned tmux plugins load
 	@cd tests && DOTFILES_NETWORK_TESTS=1 go test -count=1 -run Network ./...
 
-.PHONY: help link force-link tmux-plugins adopt status lint test test-v ci test-network
+.PHONY: help install link unlink force-link tmux-plugins adopt status lint test test-v ci test-network

@@ -4,24 +4,26 @@ Personal shell configuration files and environment settings for macOS/Linux deve
 
 ## Overview
 
-This repository contains my personal dotfiles including shell configurations (bash/zsh), terminal multiplexer settings (tmux), and various development environment configurations. The setup is optimized for software development with features like git-aware prompts, modern shell options, and convenient aliases.
+This repository contains my personal dotfiles including shell configurations (bash, zsh and fish), terminal multiplexer settings (tmux), and various development environment configurations. The setup is optimized for software development with features like git-aware prompts, modern shell options, and convenient aliases.
 
 ## Features
 
 ### Shell Configuration
 - **Bash**: Enhanced history, safety aliases, git-aware prompt, OS-specific configurations
 - **Zsh**: Modern shell options, auto-completion, directory navigation shortcuts, git integration
-- **Cross-platform**: Works on macOS, Linux, and Cygwin
+- **Fish**: The same prompt, aliases and environment, with git shortcuts as abbreviations
+- **One environment for every shell**: PATH and exported variables are set once in `.profile` (fish mirrors it)
+- **Cross-platform**: Works on macOS and Linux
 
 ### Terminal Multiplexer
 - **Tmux**: Custom key bindings, enhanced status bar, optimized for development workflows
 
 ### Development Tools Integration
-- Git completion and branch information in prompts
-- Docker shortcuts and utilities
-- Node.js (nvm), Ruby (rvm), Rust, Python (virtualenv) support
+- Git and Jujutsu (jj) state in the prompt
+- direnv hook for per-project environments
+- Rust (`~/.cargo/env`) and Go on PATH
 - Google Cloud SDK integration
-- Kubernetes (kubectl) completion
+- Kubernetes (kubectl) and Docker completion
 
 ## Installation
 
@@ -54,24 +56,22 @@ sudo yum install stow
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/dotfiles.git ~/dotfiles
-cd ~/dotfiles
+git clone https://github.com/cagedmantis/dotfiles.git ~/Code/Github/dotfiles
+cd ~/Code/Github/dotfiles
 ```
 
-2. Create symlinks using GNU Stow:
+2. Link the files and install the tmux plugins in one step:
 ```bash
-make link
+make install
 ```
+This runs `make link` (symlinks via GNU Stow), `make tmux-plugins` (tpm,
+catppuccin and tmux-yank, each checked out at the commit pinned in
+`scripts/tmux-plugins.txt`) and `make status`. You can also run the steps
+individually. Skip the plugins and tmux still starts, but with the default
+status bar and no clipboard integration. Rerun `make tmux-plugins` after
+changing a pin.
 
-3. Install the tmux plugins (tpm, catppuccin, tmux-yank):
-```bash
-make tmux-plugins
-```
-Each plugin is checked out at the commit pinned in `scripts/tmux-plugins.txt`.
-Rerun it after changing a pin. Skip it and tmux still starts, but with the
-default status bar and no clipboard integration.
-
-4. Reload your shell:
+3. Reload your shell:
 ```bash
 # For bash
 source ~/.bashrc
@@ -84,8 +84,8 @@ source ~/.zshrc
 
 #### Manual Symlink Creation
 ```bash
-# Create symlinks manually
-stow --target=$HOME .
+# Create symlinks manually (the flags must match STOW_FLAGS in the Makefile)
+stow --no-folding --target=$HOME .
 ```
 
 #### Replace Existing Files
@@ -101,20 +101,31 @@ anything, and if stow still fails it undoes the renames.
 To pull your existing `$HOME` copies *into this repo*, overwriting the tracked
 versions (review with `git diff` afterwards):
 ```bash
-make adopt
+make adopt CONFIRM=1
 ```
+Without `CONFIRM=1` it refuses and changes nothing. It prints `git diff --stat`
+when done.
+
+#### Uninstall
+```bash
+make unlink
+```
+Removes the symlinks `make link` created. Real files in `$HOME` are left alone.
+
+Run `make` with no target to list every target.
 
 ## Configuration Files
 
 | File | Purpose |
 |------|---------|
-| `.bashrc` | Bash shell configuration, aliases, and functions |
-| `.zshrc` | Zsh shell configuration with modern features |
-| `.zshenv` | Zsh, every invocation; dedupes PATH and sources `.profile` |
-| `.bash_profile` | Bash login shell; sources `.profile` then `.bashrc` |
-| `.tmux.conf` | Tmux terminal multiplexer configuration |
-| `.gitignore` | Files to ignore in this repository |
 | `.profile` | POSIX base: PATH, EDITOR/VISUAL and exported env, shared by sh, bash and zsh |
+| `.bash_profile` | Bash login shell; sources `.profile` then `.bashrc` |
+| `.bashrc` | Bash interactive configuration: prompt, aliases, functions |
+| `.zshenv` | Zsh, every invocation; dedupes PATH and sources `.profile` |
+| `.zshrc` | Zsh interactive configuration: options, completion, prompt, aliases |
+| `.config/fish/config.fish` | Fish configuration; mirrors `.profile` and the bash/zsh aliases |
+| `.tmux.conf` | Tmux terminal multiplexer configuration |
+| `.gitignore` | Files to ignore in this repository (not linked into `$HOME`) |
 | `.stow-local-ignore` | Files for Stow to ignore when symlinking (must be named `.stow-local-ignore`; Stow does not read a `.stow-global-ignore` placed inside a package) |
 
 ## Key Features
@@ -130,7 +141,7 @@ make adopt
 - **Modern shell options**: Auto-completion, directory navigation, history management
 - **Git-aware prompt**: Shows branch name and status indicators
 - **Smart aliases**: Directory shortcuts, safety features, productivity helpers
-- **Performance optimized**: Fast startup with efficient plugin loading
+- **No plugin manager**: plain zsh, so startup stays fast
 
 ### Tmux Configuration
 - **Custom prefix**: `Ctrl-g` (better for Emacs users)
@@ -144,25 +155,28 @@ make adopt
 
 ## Customization
 
-### Adding Personal Configurations
+### Machine-Local Settings
 
-The configurations support loading additional personal files:
+Settings that must not be committed (work config, private hosts, tokens) go in
+files outside the repo. Each is sourced last, so it can override anything
+above it, and each is optional:
 
-**Bash:**
-- `~/.bash_profile_ps` - PostScript/work-specific settings
-- `~/.bash_profile_do` - DigitalOcean-specific settings  
-- `~/.bash_profile_personal` - Personal settings
-- `~/.bash_linux` - Linux-specific settings
-- `~/.bash_osx` - macOS-specific settings
+| File | Read by | Use it for |
+|------|---------|------------|
+| `~/.shell_local` | sh, bash, zsh (POSIX syntax) | Environment and PATH shared by all POSIX shells |
+| `~/.bashrc_local` | interactive bash | Bash-only aliases, functions, options |
+| `~/.zshrc_local` | interactive zsh | Zsh-only aliases, functions, options |
+| `~/.config/fish/local.fish` | fish | Fish equivalent of `~/.shell_local` |
 
-**Zsh:**
-You can add custom configurations at the end of `.zshrc` or create separate files and source them.
+`~/.bash_profile_personal` is no longer read; bash prints a reminder if it
+exists. Rename it to `~/.bashrc_local`.
 
 ### Environment Variables
 
-Set environment variables in:
-- `.zshenv` (for zsh)
-- `.bash_profile` (for bash)
+Set exported variables and PATH entries in `.profile`, which sh, bash and zsh
+all read; never in `.bashrc` or `.zshrc`, which only interactive shells run.
+Fish cannot read `.profile`, so mirror the change in
+`.config/fish/config.fish`.
 
 ## Aliases Reference
 
@@ -180,9 +194,10 @@ Set environment variables in:
 - `mv='mv -i'` - Interactive move
 
 ### Development Aliases
-- `tmux='tmux -2'` - Force 256 color mode
 - `ec` - Open file in Emacs client
-- `gbp` - Git branch and push function
+- `gbp <branch>` - Create a git branch and push it with upstream tracking
+- `g`, `ga`, `gaa`, `gc`, `gcm`, `gco`, `gd`, `gds`, `gl`, `gp`, `gpl`, `gs`,
+  `gst`, `gstp` - Git shortcuts (abbreviations in fish)
 
 ## VCS Prompt
 
@@ -234,11 +249,12 @@ If you get conflicts when running `make link`:
 make force-link
 ```
 
-### Permission Issues
-Ensure proper permissions:
+### Checking the Install
 ```bash
-chmod 600 ~/.bashrc ~/.zshrc
+make status
 ```
+Reports, for every file the repo installs, whether it is linked, missing, a
+real file in the way, or a link into another tree.
 
 ### Missing Dependencies
 Install missing tools as needed:
@@ -256,7 +272,7 @@ The plugins are not installed. Run `make tmux-plugins`, then reload with
 
 ## License
 
-Licensed under the BSD License. See the repository for full license details.
+BSD 3-Clause. See [LICENSE](LICENSE).
 
 ## Contributing
 

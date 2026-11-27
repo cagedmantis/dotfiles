@@ -129,7 +129,7 @@ _vcs_kind() {
 #
 # The case patterns quote the literal prefixes, which stops "?" being treated
 # as a single-character glob.
-# Hardening (see TODO #42): git reads the *repository's own* .git/config
+# Hardening: git reads the *repository's own* .git/config
 # before doing anything, and core.fsmonitor is a command git executes. A repo
 # you merely `cd` into -- an unpacked tarball, a cloned PR branch -- therefore
 # gets arbitrary code execution once per prompt render. Verified: 1 execution
@@ -327,13 +327,6 @@ alias screen='TERM=screen screen'
 
 # Utility functions
 alias weather='curl https://wttr.in/nyc'
-# xargs -r is GNU-only, so filter empties with a while-read loop instead:
-# bare `xargs kill` runs `kill` with no arguments when nothing matches.
-chromekill() {
-    ps ux | grep '[C]hrome Helper --type=renderer' | grep -v extension-process \
-        | tr -s ' ' | cut -d ' ' -f2 \
-        | while read -r _pid; do [ -n "$_pid" ] && kill "$_pid"; done
-}
 
 # Git aliases
 alias g='git'
@@ -351,17 +344,12 @@ alias gs='git status'
 alias gst='git stash'
 alias gstp='git stash pop'
 
-# Docker shortcuts
-alias docker-create-f='docker-machine create --driver vmwarefusion vmdev'
-alias docker-create-v='docker-machine create --driver virtualbox --virtualbox-host-dns-resolver vmdev'
-
 # ====================
 # OS-SPECIFIC CONFIGURATION
 # ====================
 
 case $MACHTYPE in
     *redhat*)
-        alias yum='sudo yum'
         alias tree='tree -Ca -I ".git|*.pyc|*.swp"'
         ;;
     *linux*)
@@ -370,16 +358,10 @@ case $MACHTYPE in
         if [ -z "$DISPLAY" ] && [ -z "$SSH_CONNECTION" ]; then
             export DISPLAY=:0.0
         fi
-        alias apt-get='sudo apt-get'
-        alias apt-cache='sudo apt-cache'
-        alias aptitude='sudo aptitude'
-        alias rdesktop='rdesktop -g 1024x800'
-
         ;;
     *darwin*)
         alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
         alias lockscreen='pmset displaysleepnow'
-        alias vboxmanage='/Applications/VirtualBox.app/Contents/MacOS/VBoxManage'
 
         # Load keychain-stored keys, but only if the agent has none yet --
         # the old unconditional `ssh-add -A` ran on every interactive shell.
@@ -388,16 +370,9 @@ case $MACHTYPE in
             ssh-add -q --apple-load-keychain 2>/dev/null || ssh-add -q -A 2>/dev/null
         fi
 
-        # Host-specific VM shortcuts (vmrun, DESKTOP, desktop_*) intentionally
-        # live in ~/.bash_profile_personal, not here: they carry a private LAN
-        # address, a username and an absolute home path. That file is sourced
-        # near the end of this script and is never committed.
-        ;;
-    *cygwin*)
-        # Cygwin-specific settings
-        ;;
-    *)
-        # Default settings
+        # Host-specific shortcuts (private addresses, usernames, absolute
+        # paths) belong in ~/.shell_local or ~/.bashrc_local, which are never
+        # committed.
         ;;
 esac
 
@@ -446,11 +421,6 @@ fi
 # Machine-specific settings live outside this repo. ~/.shell_local is the
 # shared hook -- POSIX, so zsh sources the same file -- and ~/.bashrc_local is
 # for anything genuinely bash-only.
-#
-# ~/.bash_profile_ps, ~/.bash_profile_do, ~/.bash_linux and ~/.bash_osx were
-# dropped: four separate hooks with no file behind any of them.
-# ~/.bash_profile_personal is still sourced because it exists on this machine;
-# move its contents to ~/.shell_local and it can go too.
 # A login bash already got ~/.shell_local via ~/.profile; a non-login
 # interactive bash (the norm on Linux) never reads .profile, so source it here.
 if [ -z "${_DOTFILES_PROFILE_SOURCED:-}" ] && [ -f "$HOME/.shell_local" ]; then
@@ -458,8 +428,13 @@ if [ -z "${_DOTFILES_PROFILE_SOURCED:-}" ] && [ -f "$HOME/.shell_local" ]; then
     . "$HOME/.shell_local"
 fi
 
-for _local in "$HOME/.bashrc_local" "$HOME/.bash_profile_personal"; do
+if [ -f "$HOME/.bashrc_local" ]; then
     # shellcheck source=/dev/null
-    [ -f "$_local" ] && . "$_local"
-done
-unset _local
+    . "$HOME/.bashrc_local"
+fi
+
+# ~/.bash_profile_personal is no longer sourced. Say so once per shell rather
+# than silently dropping whatever it holds.
+if [ -f "$HOME/.bash_profile_personal" ]; then
+    echo "dotfiles: ~/.bash_profile_personal is no longer read; rename it to ~/.bashrc_local" >&2
+fi

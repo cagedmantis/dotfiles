@@ -56,7 +56,7 @@ export PATH
 # Exported so the shell rc files can source the matching completion scripts
 # instead of each guessing a different location.
 #
-# $HOME/Downloads is deliberately NOT probed (see TODO #43). Whatever is found
+# $HOME/Downloads is deliberately NOT probed. Whatever is found
 # here gets its bin/ put on PATH *and* has its completion.*.inc sourced by every
 # shell -- that is arbitrary code execution from the probed directory. A
 # browser's default download target is the last place that should be trusted

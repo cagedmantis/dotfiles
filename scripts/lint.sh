@@ -27,7 +27,7 @@ if have shellcheck; then
 	# SC1090/SC1091 are "can't follow non-constant source". Dotfiles source
 	# paths that only exist at runtime by design, so these are excluded
 	# globally rather than annotated at two dozen call sites.
-	for f in .bashrc .bash_profile .bash_logout; do
+	for f in .bashrc .bash_profile; do
 		[ -f "$f" ] || continue
 		if shellcheck --shell=bash --exclude=SC1090,SC1091 "$f"; then ok "$f"; else bad "$f"; fi
 	done
@@ -77,11 +77,16 @@ fi
 
 echo "== stow dry run =="
 if have stow; then
-	target="${TMPDIR:-/tmp}/dotfiles-lint-$$"
-	mkdir -p "$target"
+	# mktemp -d, not a $$-derived name, for the reason given in lib.sh.
+	if ! target=$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-lint.XXXXXX"); then
+		bad "stow dry run (could not create a scratch directory)"
+		target=''
+	fi
 	# HOME is overridden so stow cannot find a previously installed
 	# ~/.stow-global-ignore: this must behave like a brand new machine.
-	if out=$(HOME="$target" stow --no --verbose=2 --no-folding --target="$target" . 2>&1); then
+	if [ -z "$target" ]; then
+		:
+	elif out=$(HOME="$target" stow --no --verbose=2 --no-folding --target="$target" . 2>&1); then
 		if printf '%s\n' "$out" | grep -E '^LINK:' \
 			| grep -qE 'history|DS_Store|Makefile|README|TODO|CLAUDE|\.claude|\.git|stow-|tests|scripts'; then
 			printf '%s\n' "$out" | grep -E '^LINK:' | sed 's/^/    /'
@@ -93,7 +98,7 @@ if have stow; then
 		printf '%s\n' "$out" | sed 's/^/    /'
 		bad "stow dry run"
 	fi
-	rm -rf "$target"
+	[ -z "$target" ] || rm -rf "$target"
 else
 	skip "stow dry run" stow
 fi

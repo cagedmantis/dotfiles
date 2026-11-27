@@ -160,7 +160,7 @@ func bindsKey(line, key string) bool {
 	return false
 }
 
-// TestTmuxDefaultCommand guards TODO #29. On macOS tmux otherwise starts a
+// TestTmuxDefaultCommand guards a past bug: on macOS tmux otherwise starts a
 // login shell per pane, which re-runs path_helper and reorders PATH on every
 // split.
 func TestTmuxDefaultCommand(t *testing.T) {
@@ -171,7 +171,7 @@ func TestTmuxDefaultCommand(t *testing.T) {
 	}
 }
 
-// TestTmuxStatusBarLeftToPlugin guards TODO #24. The config used to define a
+// TestTmuxStatusBarLeftToPlugin guards a past bug: the config used to define a
 // full status bar that the catppuccin plugin then silently overwrote. The
 // config must not set status-left/status-right, so there is exactly one owner.
 func TestTmuxStatusBarLeftToPlugin(t *testing.T) {
@@ -189,7 +189,7 @@ func TestTmuxStatusBarLeftToPlugin(t *testing.T) {
 	}
 }
 
-// TestTmuxSensibleNotLoaded guards TODO #26. tmux-sensible set escape-time,
+// TestTmuxSensibleNotLoaded guards a past bug: tmux-sensible set escape-time,
 // history-limit, status-keys and more, and because tpm runs last its opinions
 // landed on top of the explicit settings above rather than deferring to them.
 func TestTmuxSensibleNotLoaded(t *testing.T) {
