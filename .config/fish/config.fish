@@ -292,11 +292,6 @@ end
 
 switch (uname)
     case Linux
-        # Only when nothing else has set it, and never over SSH: forcing
-        # DISPLAY breaks `ssh -X` (which sets localhost:10.0) and Wayland.
-        if test -z "$DISPLAY" -a -z "$SSH_CONNECTION"
-            set -gx DISPLAY :0.0
-        end
         # Adopt the systemd user agent (Debian 13+): it only exports
         # SSH_AUTH_SOCK to the systemd user environment, which SSH logins miss.
         if test -z "$SSH_AUTH_SOCK" -a -S "$XDG_RUNTIME_DIR/openssh_agent"

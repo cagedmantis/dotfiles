@@ -103,6 +103,11 @@ export ENABLE_LSP_TOOL=1
 # TERM is deliberately NOT set here. The terminal emulator owns it, and
 # overriding it breaks tmux (which sets tmux-256color), TRAMP and `ssh host cmd`
 # (which use TERM=dumb), and any non-xterm terminal.
+#
+# DISPLAY is not set either, for the same reason: the graphical session (X11
+# or XWayland) exports it, and `ssh -X` sets its own. A hardcoded :0.0 points
+# TTY logins, headless boxes and Wayland sessions at a display that is not
+# theirs.
 
 # ====================
 # RUST

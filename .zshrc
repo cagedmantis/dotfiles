@@ -265,11 +265,6 @@ alias weather='curl https://wttr.in/nyc'
 
 case $OSTYPE in
     *linux*)
-        # Only when nothing else has set it, and never over SSH: forcing
-        # DISPLAY breaks `ssh -X` (which sets localhost:10.0) and Wayland.
-        if [[ -z $DISPLAY && -z $SSH_CONNECTION ]]; then
-            export DISPLAY=:0.0
-        fi
         # Adopt the systemd user agent (Debian 13+): it only exports
         # SSH_AUTH_SOCK to the systemd user environment, which SSH logins miss.
         if [[ -z $SSH_AUTH_SOCK && -S $XDG_RUNTIME_DIR/openssh_agent ]]; then

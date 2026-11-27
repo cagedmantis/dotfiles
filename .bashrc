@@ -352,13 +352,6 @@ case $MACHTYPE in
     *redhat*)
         alias tree='tree -Ca -I ".git|*.pyc|*.swp"'
         ;;
-    *linux*)
-        # Only when nothing else has set it, and never over SSH: forcing
-        # DISPLAY breaks `ssh -X` (which sets localhost:10.0) and Wayland.
-        if [ -z "$DISPLAY" ] && [ -z "$SSH_CONNECTION" ]; then
-            export DISPLAY=:0.0
-        fi
-        ;;
     *darwin*)
         alias emacs="/Applications/Emacs.app/Contents/MacOS/Emacs"
         alias lockscreen='pmset displaysleepnow'

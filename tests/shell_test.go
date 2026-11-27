@@ -145,6 +145,23 @@ func TestTermNotOverridden(t *testing.T) {
 	}
 }
 
+// TestDisplayNotForced guards a past bug: on Linux every shell exported
+// DISPLAY=:0.0 whenever it was unset outside SSH, which pointed TTY logins,
+// headless boxes and Wayland sessions at an X display that was not theirs. The
+// hermetic env has neither DISPLAY nor SSH_CONNECTION, which is exactly the
+// case that used to trigger it.
+func TestDisplayNotForced(t *testing.T) {
+	home := sandbox(t)
+	for _, s := range shells {
+		t.Run(s.name, func(t *testing.T) {
+			got, _ := runShell(t, s, home, `printf '[%s]\n' "$DISPLAY"`)
+			if g := strings.TrimSpace(got); g != "[]" {
+				t.Errorf("DISPLAY = %s, want it left unset (the shell must not set DISPLAY)", g)
+			}
+		})
+	}
+}
+
 // TestEditorIsConsistent guards a past bug, where EDITOR was set twice to two
 // different values and the one non-interactive tools actually saw pointed at an
 // absolute Homebrew path that does not exist on Linux.

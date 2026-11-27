@@ -13,5 +13,6 @@
 tpm              https://github.com/tmux-plugins/tpm                 7bdb7ca33c9cc6440a600202b50142f401b6fe21
 # master as of 2026-09-23; the fork is untagged
 catppuccin-tmux  https://github.com/dreamsofcode-io/catppuccin-tmux  b4e0715356f820fc72ea8e8baf34f0f60e891718
-# v2.3.0
-tmux-yank        https://github.com/tmux-plugins/tmux-yank           fd8000238b324005389076486a2e6e03dba1c64f
+# master as of 2023-07-19 (no release since v2.3.0 in 2018). Moved off v2.3.0
+# for wl-copy (Wayland) support and a tmux version check that handles "3.5a".
+tmux-yank        https://github.com/tmux-plugins/tmux-yank           acfd36e4fcba99f8310a7dfb432111c242fe7392
