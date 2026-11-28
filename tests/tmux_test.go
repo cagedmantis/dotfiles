@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
@@ -17,19 +18,22 @@ import (
 // which is what these assertions are about. The plugins-present counterpart is
 // TestNetworkTmuxLoadsPinnedPlugins, which needs the network and so runs only
 // under `make test-network`.
-func tmuxServer(t *testing.T) func(args ...string) string {
+var tmuxServers atomic.Int64
+
+func tmuxServer(t *testing.T, extraEnv ...string) func(args ...string) string {
 	t.Helper()
 	if _, err := exec.LookPath("tmux"); err != nil {
 		t.Skip("tmux not installed")
 	}
 	root := repoRoot(t)
 	home := sandbox(t)
-	socket := fmt.Sprintf("dotfiles-test-%d", os.Getpid())
+	// One socket per server, so a test can run two servers side by side.
+	socket := fmt.Sprintf("dotfiles-test-%d-%d", os.Getpid(), tmuxServers.Add(1))
 
 	run := func(args ...string) (string, error) {
 		full := append([]string{"-f", filepath.Join(root, ".tmux.conf"), "-L", socket}, args...)
 		cmd := exec.Command("tmux", full...)
-		cmd.Env = env(home)
+		cmd.Env = env(home, extraEnv...)
 		out, err := cmd.CombinedOutput()
 		return strings.TrimSpace(string(out)), err
 	}
@@ -229,5 +233,19 @@ func TestTmuxSensibleNotLoaded(t *testing.T) {
 		if strings.HasPrefix(l, "set") && strings.Contains(l, "tmux-sensible") {
 			t.Errorf("tmux-sensible is loaded again; it overrides the explicit settings above it: %s", l)
 		}
+	}
+}
+
+// TestTmuxHostOnlyOverSSH checks the machine name joins the status bar on a
+// tmux server started from an SSH session, and only there.
+func TestTmuxHostOnlyOverSSH(t *testing.T) {
+	const host = "#{E:@catppuccin_status_host}"
+	local := tmuxServer(t)("show-options", "-gv", "status-right")
+	if strings.Contains(local, host) {
+		t.Errorf("local server shows the host module: %s", local)
+	}
+	remote := tmuxServer(t, "SSH_CONNECTION=192.0.2.1 50000 192.0.2.2 22")("show-options", "-gv", "status-right")
+	if !strings.HasSuffix(remote, host) || strings.Count(remote, host) != 1 {
+		t.Errorf("server started over SSH should end status-right with the host module exactly once: %s", remote)
 	}
 }

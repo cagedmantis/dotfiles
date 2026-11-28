@@ -151,7 +151,7 @@ Run `make` with no target to list every target.
 ### Tmux Configuration
 - **Custom prefix**: `Ctrl-g` (better for Emacs users)
 - **Intuitive bindings**: `|` for horizontal split, `-` for vertical split
-- **Enhanced status bar**: Catppuccin (mocha) theme, via a plugin
+- **Enhanced status bar**: Catppuccin (mocha) theme, via a plugin; shows the machine name when tmux was started over SSH
 - **Clipboard**: tmux-yank copies to the system clipboard, including over SSH
 - **Pinned plugins**: installed by `make tmux-plugins` at exact commits, not
   the latest code. Avoid tpm's `prefix + I` and `prefix + U`, which fetch the
