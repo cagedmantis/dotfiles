@@ -3,8 +3,8 @@
 # at its pinned commit under ~/.tmux/plugins.
 #
 # This does the cloning itself rather than calling tpm's installer, because
-# tpm can only pin a plugin to a branch or tag and the catppuccin fork has
-# neither. tpm is still what loads the plugins when tmux starts: it runs
+# tpm can only pin a plugin to a branch or tag, and a tag can be moved; a
+# commit cannot. tpm is still what loads the plugins when tmux starts: it runs
 # whatever is already in ~/.tmux/plugins, so it runs these pinned checkouts.
 #
 # Safe to rerun. A plugin already at its pin is left alone, including when

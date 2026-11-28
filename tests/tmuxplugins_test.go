@@ -412,19 +412,20 @@ func TestNetworkTmuxLoadsPinnedPlugins(t *testing.T) {
 	// tpm runs the plugins in the background after the config loads, one
 	// after another, so poll until both have taken effect or time runs out.
 	//
-	// catppuccin: tmux's default status-right has no styling at all.
+	// catppuccin: the session module status-right refers to is only defined
+	// once the plugin has run, so the bar expands to styled text only then.
 	// tmux-yank: stock emacs copy-mode has no copy-pipe bindings.
 	var status, keys string
 	for range 100 {
-		status = tmux("show-options", "-gv", "status-right")
+		status = tmux("display-message", "-p", "-t", "probe", "#{E:status-right}")
 		keys = tmux("list-keys", "-T", "copy-mode")
 		if strings.Contains(status, "#[fg=") && strings.Contains(keys, "copy-pipe") {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	if !strings.Contains(status, "#[fg=") {
-		t.Errorf("status-right is unstyled, so catppuccin did not load:\n%s", status)
+	if !strings.Contains(status, "#[fg=") || !strings.Contains(status, "probe") {
+		t.Errorf("status-right does not expand to a styled bar naming the session, so catppuccin did not load:\n%s", status)
 	}
 	if !strings.Contains(keys, "copy-pipe") {
 		t.Errorf("no copy-pipe bindings in copy-mode, so tmux-yank did not load:\n%s", keys)

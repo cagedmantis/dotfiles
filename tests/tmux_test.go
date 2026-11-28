@@ -171,21 +171,47 @@ func TestTmuxDefaultCommand(t *testing.T) {
 	}
 }
 
-// TestTmuxStatusBarLeftToPlugin guards a past bug: the config used to define a
-// full status bar that the catppuccin plugin then silently overwrote. The
-// config must not set status-left/status-right, so there is exactly one owner.
-func TestTmuxStatusBarLeftToPlugin(t *testing.T) {
+// TestTmuxStatusBarOwnership keeps each part of the bar with one owner.
+// catppuccin/tmux v2 sets the window list (window-status-format and
+// window-status-current-format) and leaves status-left/status-right to the
+// config, which builds them from the plugin's modules. A past bug: the config
+// defined window formats the plugin then silently overwrote. And with the
+// old fork's option names, or no modules at all, v2 loads without error and
+// shows a bare bar.
+func TestTmuxStatusBarOwnership(t *testing.T) {
 	root := repoRoot(t)
 	b, err := os.ReadFile(filepath.Join(root, ".tmux.conf"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, opt := range []string{"status-left ", "status-right ", "window-status-format ", "window-status-current-format "} {
-		for _, line := range lines(string(b)) {
-			if strings.HasPrefix(strings.TrimSpace(line), "set") && strings.Contains(line, opt) {
-				t.Errorf("%s.tmux.conf sets %q, which the catppuccin plugin overwrites: %s", "", opt, line)
+	conf := string(b)
+	var sets []string
+	for _, line := range lines(conf) {
+		if strings.HasPrefix(line, "set") {
+			sets = append(sets, line)
+		}
+	}
+	has := func(sub string) bool {
+		for _, l := range sets {
+			if strings.Contains(l, sub) {
+				return true
 			}
 		}
+		return false
+	}
+	for _, opt := range []string{"window-status-format ", "window-status-current-format "} {
+		if has(opt) {
+			t.Errorf(".tmux.conf sets %q, which the catppuccin plugin overwrites", strings.TrimSpace(opt))
+		}
+	}
+	if !has("@catppuccin_flavor ") {
+		t.Error(".tmux.conf does not set @catppuccin_flavor")
+	}
+	if has("@catppuccin_flavour ") {
+		t.Error(".tmux.conf sets @catppuccin_flavour, the old fork's spelling; v2 ignores it")
+	}
+	if !has("status-right ") || !strings.Contains(conf, "#{E:@catppuccin_status_") {
+		t.Error(".tmux.conf does not build status-right from catppuccin modules; v2 adds none itself")
 	}
 }
 
