@@ -60,13 +60,14 @@ zstyle ':completion:*' menu select
 # Which VCS owns $PWD? Walks the tree in pure shell -- no subprocess, unlike
 # `git rev-parse` / `jj root`. First hit wins, so a colocated repo (both .git
 # and .jj present) reports as jj, which is the one you actually drive.
+# Sets _VCS_KIND (jj or git) and _VCS_ROOT (the directory holding it).
 _vcs_kind() {
     local dir="$PWD"
-    _VCS_KIND=""
+    _VCS_KIND="" _VCS_ROOT=""
     while [ -n "$dir" ]; do
-        if [[ -d "$dir/.jj" ]]; then _VCS_KIND=jj; return 0; fi
+        if [[ -d "$dir/.jj" ]]; then _VCS_KIND=jj _VCS_ROOT=$dir; return 0; fi
         # -e, not -d: linked worktrees and submodules use a .git *file*
-        if [[ -e "$dir/.git" ]]; then _VCS_KIND=git; return 0; fi
+        if [[ -e "$dir/.git" ]]; then _VCS_KIND=git _VCS_ROOT=$dir; return 0; fi
         dir="${dir%/*}"
     done
     return 1
@@ -129,13 +130,23 @@ git_prompt_info() {
 # One invocation returns both rows: the working copy, and the nearest ancestor
 # carrying a bookmark. jj has no "current branch" -- @ is usually a fresh empty
 # commit with no bookmark on it at all.
+#
+# Needs jj 0.22+ (the first release with bookmarks). Any failure returns
+# non-zero so vcs_prompt_info can fall back to git in a colocated repo.
+#
+# Hardening (see parse_jj_info in .bashrc for the full story): a plain-file
+# .jj/repo/config.toml is pre-0.38 repo config that jj would adopt and trust,
+# so such a repo is skipped until you run jj there yourself; and the overrides
+# pin signing and fsmonitor, the two settings that can run a program here.
 jj_prompt_info() {
     (( $+commands[jj] )) || return
+    [[ -f $_VCS_ROOT/.jj/repo/config.toml && ! -L $_VCS_ROOT/.jj/repo/config.toml ]] && return 1
     local snapshot="--ignore-working-copy"
     [[ ${DOTFILES_JJ_SNAPSHOT:-0} == 1 ]] && snapshot=""
     local out tag f2 f3 f4 f5
     local change="" empty="" conflict="" divergent="" bookmark="" markers=""
-    out=$(jj ${=snapshot} --no-pager log --color=never --no-graph \
+    out=$(jj ${=snapshot} --no-pager --config signing.behavior=drop --config fsmonitor.backend=none \
+             log --color=never --no-graph \
              -r '@ | heads(::@ & bookmarks())' \
              -T 'if(current_working_copy, "WC\t" ++ change_id.shortest(8) ++ "\t" ++ empty ++ "\t" ++ conflict ++ "\t" ++ divergent, "BM\t" ++ local_bookmarks.map(|b| b.name()).join(",")) ++ "\n"' \
              2>/dev/null) || return
@@ -152,11 +163,13 @@ jj_prompt_info() {
     echo " %F{13}(%f%F{14}${bookmark}@${change}${markers}%f%F{13})%f"
 }
 
-# Dispatch to whichever VCS owns the current directory.
+# Dispatch to whichever VCS owns the current directory. In a colocated repo
+# a failed jj prompt falls back to git; a pure jj repo has no .git of its own
+# and must not pick up an enclosing git repo.
 vcs_prompt_info() {
     _vcs_kind || return
     case "$_VCS_KIND" in
-        jj)  jj_prompt_info ;;
+        jj)  jj_prompt_info || { [[ -e $_VCS_ROOT/.git ]] && git_prompt_info; } ;;
         git) git_prompt_info ;;
     esac
 }
@@ -253,6 +266,10 @@ alias gs='git status'
 alias gst='git stash'
 alias gstp='git stash pop'
 
+# Jujutsu. One shell alias, like g=git; the rest are jj aliases in
+# ~/.config/jj/conf.d/dotfiles.toml, so every shell shares one copy.
+alias j='jj'
+
 # Application shortcuts
 alias ec="emacsclient -t"
 
@@ -303,6 +320,31 @@ fi
 if (( $+commands[kubectl] )); then
     source <(kubectl completion zsh)
 fi
+
+# Source the completion script "$@" prints for tool $1, cached under
+# ~/.cache/dotfiles and regenerated only when the tool's binary is newer than
+# the cache (an upgrade), so a shell start costs no exec of the tool.
+_cached_completion() {
+    local name=$1 bin cache
+    shift
+    bin=${commands[$name]:-}
+    [[ -n $bin ]] || return
+    cache="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/$name-completion.zsh"
+    if [[ ! -s $cache || $bin -nt $cache ]]; then
+        mkdir -p "${cache:h}" || return
+        if ! "$@" >"$cache.$$" 2>/dev/null || [[ ! -s $cache.$$ ]]; then
+            rm -f "$cache.$$"
+            return 1
+        fi
+        mv -f "$cache.$$" "$cache"
+    fi
+    source "$cache"
+}
+
+# Jujutsu completion: jj's dynamic script, static text that calls `jj` at
+# completion time, which is what makes caching it safe. Needs compdef, so it
+# stays after compinit.
+(( $+commands[jj] )) && _cached_completion jj env COMPLETE=zsh jj
 
 # Google Cloud SDK
 # GCLOUD_SDK_ROOT is probed once in ~/.profile; every shell uses that answer

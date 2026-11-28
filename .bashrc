@@ -95,6 +95,31 @@ if command -v kubectl >/dev/null 2>&1 \
     source <(kubectl completion bash)
 fi
 
+# Source the completion script "$@" prints for tool $1, cached under
+# ~/.cache/dotfiles and regenerated only when the tool's binary is newer than
+# the cache (an upgrade), so a shell start costs no exec of the tool.
+_cached_completion() {
+    local name=$1 bin cache
+    shift
+    bin=$(command -v "$name") || return
+    cache="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles/$name-completion.bash"
+    if [ ! -s "$cache" ] || [ "$bin" -nt "$cache" ]; then
+        mkdir -p "${cache%/*}" || return
+        if ! "$@" >"$cache.$$" 2>/dev/null || [ ! -s "$cache.$$" ]; then
+            rm -f "$cache.$$"
+            return 1
+        fi
+        mv -f "$cache.$$" "$cache"
+    fi
+    # shellcheck source=/dev/null
+    . "$cache"
+}
+
+# Jujutsu completion. The script is jj's dynamic one: it is static text that
+# calls `jj` at completion time, which is what makes caching it safe. It picks
+# its own `complete` flags for old bash, so it needs no version gate.
+command -v jj >/dev/null 2>&1 && _cached_completion jj env COMPLETE=bash jj
+
 # ====================
 # PROMPT CONFIGURATION
 # ====================
@@ -102,13 +127,14 @@ fi
 # Which VCS owns $PWD? Walks the tree in pure shell -- no subprocess, unlike
 # `git rev-parse` / `jj root`. First hit wins, so a colocated repo (both .git
 # and .jj present) reports as jj, which is the one you actually drive.
+# Sets _VCS_KIND (jj or git) and _VCS_ROOT (the directory holding it).
 _vcs_kind() {
     local dir="$PWD"
-    _VCS_KIND=""
+    _VCS_KIND="" _VCS_ROOT=""
     while [ -n "$dir" ]; do
-        if [ -d "$dir/.jj" ]; then _VCS_KIND=jj; return 0; fi
+        if [ -d "$dir/.jj" ]; then _VCS_KIND=jj _VCS_ROOT=$dir; return 0; fi
         # -e, not -d: linked worktrees and submodules use a .git *file*
-        if [ -e "$dir/.git" ]; then _VCS_KIND=git; return 0; fi
+        if [ -e "$dir/.git" ]; then _VCS_KIND=git _VCS_ROOT=$dir; return 0; fi
         dir="${dir%/*}"
     done
     return 1
@@ -175,13 +201,34 @@ parse_git_branch() {
 # One invocation returns both rows we need: the working copy, and the nearest
 # ancestor carrying a bookmark. jj has no "current branch" -- @ is usually a
 # fresh empty commit with no bookmark on it at all.
+#
+# Needs jj 0.22+ (the first release with bookmarks). Any failure -- jj missing,
+# too old, or the repo skipped below -- returns non-zero so the caller can fall
+# back to the git prompt in a colocated repo.
+#
+# Hardening, the jj counterpart of the git flags above. jj reads the repo's own
+# config, and a plain-file .jj/repo/config.toml is the pre-0.38 location: jj
+# 0.38+ still reads one, moves it to ~/.config/jj/repos/ (leaving a symlink) and
+# trusts it from then on. So a repo you merely cd into would have its config
+# adopted by the prompt; it is skipped until you run jj there yourself.
+# For already-trusted configs, the overrides pin the two settings that can run
+# a program from `jj log`: signing.behavior (with DOTFILES_JJ_SNAPSHOT=1 the
+# snapshot writes a commit, and signing it runs signing.backends.*.program --
+# verified: 1 execution per render without the override, 0 with it) and
+# fsmonitor.backend (watchman can register a trigger that keeps running jj).
+# Template and revset aliases can still make the prompt show the wrong thing,
+# but cannot run anything.
 parse_jj_info() {
     command -v jj >/dev/null 2>&1 || return
+    if [ -f "$_VCS_ROOT/.jj/repo/config.toml" ] && [ ! -L "$_VCS_ROOT/.jj/repo/config.toml" ]; then
+        return 1
+    fi
     local snapshot="--ignore-working-copy"
     [ "${DOTFILES_JJ_SNAPSHOT:-0}" = 1 ] && snapshot=""
     local out tag f2 f3 f4 f5
     local change="" empty="" conflict="" divergent="" bookmark="" markers=""
-    out=$(jj $snapshot --no-pager log --color=never --no-graph \
+    out=$(jj $snapshot --no-pager --config signing.behavior=drop --config fsmonitor.backend=none \
+             log --color=never --no-graph \
              -r '@ | heads(::@ & bookmarks())' \
              -T 'if(current_working_copy, "WC\t" ++ change_id.shortest(8) ++ "\t" ++ empty ++ "\t" ++ conflict ++ "\t" ++ divergent, "BM\t" ++ local_bookmarks.map(|b| b.name()).join(",")) ++ "\n"' \
              2>/dev/null) || return
@@ -198,11 +245,14 @@ parse_jj_info() {
     echo "(${bookmark}@${change}${markers})"
 }
 
-# Dispatch to whichever VCS owns the current directory.
+# Dispatch to whichever VCS owns the current directory. In a colocated repo
+# (.git beside .jj) a failed jj prompt falls back to git rather than going
+# blank; a pure jj repo has no .git to fall back to, and must not pick up an
+# enclosing git repo further up the tree.
 parse_vcs_info() {
     _vcs_kind || return
     case "$_VCS_KIND" in
-        jj)  parse_jj_info ;;
+        jj)  parse_jj_info || { [ -e "$_VCS_ROOT/.git" ] && parse_git_branch; } ;;
         git) parse_git_branch ;;
     esac
 }
@@ -343,6 +393,10 @@ alias gpl='git pull'
 alias gs='git status'
 alias gst='git stash'
 alias gstp='git stash pop'
+
+# Jujutsu. One shell alias, like g=git; the rest are jj aliases in
+# ~/.config/jj/conf.d/dotfiles.toml, so every shell shares one copy.
+alias j='jj'
 
 # ====================
 # OS-SPECIFIC CONFIGURATION

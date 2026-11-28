@@ -23,6 +23,7 @@ var wantLinks = []string{
 	".bash_profile",
 	".bashrc",
 	".config/fish/config.fish",
+	".config/jj/conf.d/dotfiles.toml",
 	".profile",
 	".tmux.conf",
 	".zshenv",

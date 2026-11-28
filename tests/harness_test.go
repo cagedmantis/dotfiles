@@ -57,32 +57,48 @@ func sandbox(t *testing.T) string {
 			return
 		}
 		sandboxHome = dir
-
-		// path_append/path_prepend are existence-checked by design, so a
-		// genuinely empty $HOME would legitimately produce a PATH without
-		// ~/bin. Create the directories a real machine would have, so the
-		// tests below assert on the ordering and dedup logic rather than
-		// re-discovering that the guards work.
-		for _, d := range homeDirs {
-			if err := os.MkdirAll(filepath.Join(dir, d), 0o755); err != nil {
-				sandboxErr = err
-				return
-			}
-		}
-
-		cmd := exec.Command("stow", "--no-folding", "--target="+dir, ".")
-		cmd.Dir = root
-		// HOME matters here: stow consults $HOME/.stow-global-ignore, and the
-		// point of this sandbox is that no such file exists.
-		cmd.Env = append(os.Environ(), "HOME="+dir)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			sandboxErr = &exitError{err: err, out: string(out)}
-		}
+		sandboxErr = install(root, dir)
 	})
 	if sandboxErr != nil {
 		t.Fatalf("building sandbox: %v", sandboxErr)
 	}
 	return sandboxHome
+}
+
+// stowInto builds a throwaway $HOME of its own, installed the way `make link`
+// does. The shared sandbox() cannot be used by tests that mutate $HOME: it is
+// built once per binary and every other test reads from it.
+func stowInto(t *testing.T) string {
+	t.Helper()
+	home := t.TempDir()
+	if err := install(repoRoot(t), home); err != nil {
+		t.Fatalf("stow into %s: %v", home, err)
+	}
+	return home
+}
+
+// install stows the repository at root into the empty directory home.
+func install(root, home string) error {
+	// path_append/path_prepend are existence-checked by design, so a
+	// genuinely empty $HOME would legitimately produce a PATH without
+	// ~/bin. Create the directories a real machine would have, so the
+	// tests assert on the ordering and dedup logic rather than
+	// re-discovering that the guards work.
+	for _, d := range homeDirs {
+		if err := os.MkdirAll(filepath.Join(home, d), 0o755); err != nil {
+			return err
+		}
+	}
+
+	cmd := exec.Command("stow", "--no-folding", "--target="+home, ".")
+	cmd.Dir = root
+	// HOME matters here: stow consults $HOME/.stow-global-ignore, and the
+	// point of this sandbox is that no such file exists.
+	cmd.Env = append(os.Environ(), "HOME="+home)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return &exitError{err: err, out: string(out)}
+	}
+	return nil
 }
 
 type exitError struct {

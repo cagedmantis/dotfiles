@@ -69,15 +69,20 @@ if status is-interactive
     # Which VCS owns $PWD? Walks the tree in pure fish -- no subprocess, unlike
     # `git rev-parse` / `jj root`. First hit wins, so a colocated repo (both .git
     # and .jj present) reports as jj, which is the one you actually drive.
+    # Also sets the global _vcs_root to the directory holding it (a command
+    # substitution runs in the same fish, so the caller sees it).
     function _vcs_kind --description 'Echo jj or git for the repo owning $PWD'
         set -l dir $PWD
+        set -g _vcs_root ""
         while test -n "$dir"
             if test -d "$dir/.jj"
+                set -g _vcs_root $dir
                 echo jj
                 return 0
             end
             # -e, not -d: linked worktrees and submodules use a .git *file*
             if test -e "$dir/.git"
+                set -g _vcs_root $dir
                 echo git
                 return 0
             end
@@ -133,7 +138,7 @@ if status is-interactive
         if test "$branch" = "(detached)"
             set branch "@"(string sub -l 7 -- $oid)
         end
-        echo -n " "(set_color brblue)"("(set_color brcyan)"$branch$staged$unstaged$untracked"(set_color brblue)")"(set_color normal)
+        echo -n " $(set_color brblue)($(set_color brcyan)$branch$staged$unstaged$untracked$(set_color brblue))$(set_color normal)"
     end
 
     # Jujutsu status fragment. Renders as (bookmark@changeid<markers>), in magenta
@@ -155,13 +160,27 @@ if status is-interactive
     # One invocation returns both rows: the working copy, and the nearest ancestor
     # carrying a bookmark. jj has no "current branch" -- @ is usually a fresh empty
     # commit with no bookmark on it at all.
+    #
+    # Needs jj 0.22+ (the first release with bookmarks). Any failure returns
+    # non-zero so _vcs_prompt_info can fall back to git in a colocated repo.
+    #
+    # Hardening (see parse_jj_info in .bashrc for the full story): a plain-file
+    # .jj/repo/config.toml is pre-0.38 repo config that jj would adopt and
+    # trust, so such a repo is skipped until you run jj there yourself; and the
+    # overrides pin signing and fsmonitor, the two settings that can run a
+    # program here.
     function _jj_prompt_info --description 'Coloured jj change + bookmark fragment'
         command -q jj; or return 1
+        set -l legacy "$_vcs_root/.jj/repo/config.toml"
+        if test -f $legacy; and not test -L $legacy
+            return 1
+        end
         set -l snapshot --ignore-working-copy
         if test "$DOTFILES_JJ_SNAPSHOT" = 1
             set snapshot
         end
-        set -l out (jj $snapshot --no-pager log --color=never --no-graph \
+        set -l out (jj $snapshot --no-pager --config signing.behavior=drop --config fsmonitor.backend=none \
+            log --color=never --no-graph \
             -r '@ | heads(::@ & bookmarks())' \
             -T 'if(current_working_copy, "WC\t" ++ change_id.shortest(8) ++ "\t" ++ empty ++ "\t" ++ conflict ++ "\t" ++ divergent, "BM\t" ++ local_bookmarks.map(|b| b.name()).join(",")) ++ "\n"' \
             2>/dev/null)
@@ -185,7 +204,7 @@ if status is-interactive
                     end
             end
         end
-        echo -n " "(set_color brmagenta)"("(set_color brcyan)"$bookmark@$change$markers"(set_color brmagenta)")"(set_color normal)
+        echo -n " $(set_color brmagenta)($(set_color brcyan)$bookmark@$change$markers$(set_color brmagenta))$(set_color normal)"
     end
 
     # Turn terminal mouse reporting off before every prompt. tmux (mouse on),
@@ -199,23 +218,37 @@ if status is-interactive
         printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l\e[?1015l'
     end
 
-    function fish_prompt
-        set -l vcs_info ""
+    # Dispatch to whichever VCS owns the current directory. In a colocated
+    # repo a failed jj prompt falls back to git; a pure jj repo has no .git of
+    # its own and must not pick up an enclosing git repo.
+    function _vcs_prompt_info --description 'VCS fragment for the prompt'
         switch (_vcs_kind)
             case jj
-                set vcs_info (_jj_prompt_info)
+                _jj_prompt_info
+                or begin
+                    test -e "$_vcs_root/.git"; and _git_prompt_info
+                end
             case git
-                set vcs_info (_git_prompt_info)
+                _git_prompt_info
         end
+    end
+
+    # Every substitution in the prompt is quoted, "$(...)". An unquoted (...)
+    # that prints nothing -- set_color does exactly that when TERM=dumb, as in
+    # Emacs shells and TRAMP -- is an empty list, and fish drops any word
+    # concatenated with an empty list: the VCS fragment vanished entirely, and
+    # printf's arguments shifted out of place.
+    function fish_prompt
+        set -l vcs_info "$(_vcs_prompt_info)"
 
         # Colours match bash and zsh: green user, yellow @, green host, cyan path.
         printf '%s%s%s%s%s%s%s: %s%s%s%s\n> %s' \
-            (set_color brgreen) $USER \
-            (set_color bryellow) '@' \
-            (set_color brgreen) (prompt_hostname) (set_color normal) \
-            (set_color brcyan) (prompt_pwd) (set_color normal) \
+            "$(set_color brgreen)" $USER \
+            "$(set_color bryellow)" '@' \
+            "$(set_color brgreen)" "$(prompt_hostname)" "$(set_color normal)" \
+            "$(set_color brcyan)" "$(prompt_pwd)" "$(set_color normal)" \
             "$vcs_info" \
-            (set_color normal)
+            "$(set_color normal)"
     end
 
     # ====================
@@ -284,6 +317,10 @@ if status is-interactive
     abbr -a gst 'git stash'
     abbr -a gstp 'git stash pop'
 
+    # Jujutsu. One abbreviation, like g=git; the rest are jj aliases in
+    # ~/.config/jj/conf.d/dotfiles.toml, so every shell shares one copy.
+    abbr -a j jj
+
 end
 
 # ====================
@@ -344,6 +381,24 @@ if status is-interactive
     # completions differed by shell.
     if command -q kubectl
         kubectl completion fish | source
+    end
+
+    # Jujutsu completion: jj's dynamic script, static text that calls `jj` at
+    # completion time, which is what makes caching it safe. Cached under
+    # ~/.cache/dotfiles and regenerated only when the jj binary is newer, so a
+    # shell start costs no jj exec. `path mtime` because fish's test has no -nt.
+    if command -q jj
+        set -l cache_dir (set -q XDG_CACHE_HOME; and echo $XDG_CACHE_HOME; or echo $HOME/.cache)/dotfiles
+        set -l cache $cache_dir/jj-completion.fish
+        set -l bin (command -s jj)
+        if not test -s $cache; or test (path mtime -- $bin) -gt (path mtime -- $cache)
+            mkdir -p $cache_dir
+            and env COMPLETE=fish jj >$cache.$fish_pid 2>/dev/null
+            and test -s $cache.$fish_pid
+            and mv -f $cache.$fish_pid $cache
+            or rm -f $cache.$fish_pid
+        end
+        test -s $cache; and source $cache
     end
 
 end

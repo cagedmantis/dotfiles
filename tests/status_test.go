@@ -34,23 +34,6 @@ func runStatus(t *testing.T, home string) (string, int) {
 	return "", -1
 }
 
-// stowInto builds a throwaway $HOME of its own, installed the way `make link`
-// does. The shared sandbox() cannot be used by tests that mutate $HOME: it is
-// built once per binary and every other test reads from it.
-func stowInto(t *testing.T) string {
-	t.Helper()
-	root := repoRoot(t)
-	home := t.TempDir()
-
-	cmd := exec.Command("stow", "--no-folding", "--target="+home, ".")
-	cmd.Dir = root
-	cmd.Env = append(os.Environ(), "HOME="+home)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("stow into %s: %v\n%s", home, err, out)
-	}
-	return home
-}
-
 // TestStatusOnUnlinkedHome is the question the target exists to answer: a
 // machine that has never run `make link` must be reported as such, and must
 // exit non-zero so the answer is usable from a script.

@@ -1,0 +1,40 @@
+# jj aliases shared by every shell, installed by the dotfiles repo.
+#
+# This is the jj counterpart of the g* git shortcuts in .bashrc/.zshrc/fish:
+# keeping them here rather than as shell aliases means one copy for all three
+# shells, and jj's own completion covers them.
+#
+# Your own settings (user.name, user.email, ui.editor, ...) belong in
+# ~/.config/jj/config.toml, which this repo never touches. jj reads that file
+# first and conf.d/*.toml after it, in name order, so for a key set in both
+# places this file wins; to override one of these aliases, put it in a later
+# file such as ~/.config/jj/conf.d/zz-local.toml.
+#
+# Needs jj 0.28+ (conf.d support; `util exec` arrived in 0.24).
+
+[aliases]
+# One line per change, like `gl` (git log --oneline).
+l = ["log", "-T", "builtin_log_oneline"]
+
+# Like `gpl` / `gp`.
+fetch = ["git", "fetch"]
+push = ["git", "push"]
+
+# Move the nearest bookmark behind @ up to @-, i.e. onto the change you just
+# finished with `jj commit` -- jj's bookmarks, unlike git branches, do not
+# advance on their own.
+tug = ["bookmark", "move", "--from", "heads(::@- & bookmarks())", "--to", "@-"]
+
+# `jj bp NAME`: the counterpart of the shells' `gbp NAME` (create a branch and
+# push it). Puts bookmark NAME on the change you are working on -- @ if it has
+# content, otherwise @-, which is where `jj commit` leaves your work -- and
+# pushes it to the default remote, tracked. `--named` creates and tracks the
+# bookmark in one step; a plain `bookmark create` + `push --bookmark` is
+# refused, because jj will not create an untracked remote bookmark.
+bp = ["util", "exec", "--", "sh", "-c", '''
+if [ "$#" -ne 1 ]; then
+    echo "usage: jj bp NAME" >&2
+    exit 2
+fi
+jj git push --named "$1=coalesce(@ ~ empty(), @-)"
+''', "jj-bp"]

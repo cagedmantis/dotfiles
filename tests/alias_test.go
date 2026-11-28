@@ -2,19 +2,12 @@ package dotfiles_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
 )
-
-// noConfigArgs runs a shell with its configuration suppressed, giving a
-// baseline of names the shell defines on its own.
-var noConfigArgs = map[string][]string{
-	"bash": {"--norc", "--noprofile", "-ic"},
-	"zsh":  {"--no-rcs", "-ic"},
-	"fish": {"--no-config", "-c"},
-}
 
 // internalNames are implementation details rather than commands anyone types.
 // They are excluded from the parity comparison entirely.
@@ -59,7 +52,12 @@ var knownDivergence = map[string]string{
 }
 
 // configuredNames returns the alias and function names this repository adds to
-// the given shell, by subtracting a no-config baseline.
+// the given shell, by subtracting a baseline: the same login+interactive shell
+// run against an empty $HOME. Only the user-level files differ between the
+// two runs, so everything the system configuration defines -- Debian's
+// bash-completion helpers (quote, dequote) from /etc/profile.d, the bg/fg/kill
+// wrappers in /usr/share/fish/config.fish -- cancels out. A --norc/--no-config
+// baseline skipped those system files too, and reported them as drift.
 //
 // Subtraction alone is not a sufficient parity test: fish ships its own ls, ll,
 // la and grep functions, so a config that *overrides* them adds nothing new and
@@ -67,15 +65,13 @@ var knownDivergence = map[string]string{
 // parity is then judged by whether each name actually resolves.
 func configuredNames(t *testing.T, s shell, home string) map[string]bool {
 	t.Helper()
-	args, ok := noConfigArgs[s.name]
-	if !ok {
-		t.Skipf("no baseline invocation defined for %s", s.name)
-	}
-
 	withCfg, _ := runShell(t, s, home, s.printNames)
-	base := s
-	base.loginArgs = func(script string) []string { return append(append([]string(nil), args...), script) }
-	withoutCfg, _ := runShell(t, base, home, s.printNames)
+
+	empty := t.TempDir()
+	// An empty .zshrc keeps zsh-newuser-install from starting: it runs in an
+	// interactive zsh that finds no startup files at all.
+	write(t, filepath.Join(empty, ".zshrc"), "")
+	withoutCfg, _ := runShell(t, s, empty, s.printNames)
 
 	baseline := map[string]bool{}
 	for _, n := range lines(withoutCfg) {

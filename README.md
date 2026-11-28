@@ -19,11 +19,11 @@ This repository contains my personal dotfiles including shell configurations (ba
 - **Tmux**: Custom key bindings, enhanced status bar, optimized for development workflows
 
 ### Development Tools Integration
-- Git and Jujutsu (jj) state in the prompt
+- Git and Jujutsu (jj) state in the prompt, jj aliases and completion
 - direnv hook for per-project environments
 - Rust (`~/.cargo/env`) and Go on PATH
 - Google Cloud SDK integration
-- Kubernetes (kubectl) and Docker completion
+- Kubernetes (kubectl), Docker and jj completion
 
 ## Installation
 
@@ -34,6 +34,10 @@ This repository contains my personal dotfiles including shell configurations (ba
 - tmux 3.2 or newer (the config uses `terminal-features` and `extended-keys`)
 - On Linux, a clipboard tool for tmux-yank: `xclip`, `xsel`, or `wl-copy` (from
   `wl-clipboard`) on Wayland. macOS has `pbcopy` built in.
+- For fish: fish 3.6 or newer (the prompt uses `"$(...)"`, the jj completion
+  cache `path mtime`)
+- Optional: jj 0.28 or newer for the jj aliases (the prompt alone works from
+  0.22)
 
 #### Install GNU Stow
 
@@ -125,6 +129,7 @@ Run `make` with no target to list every target.
 | `.zshrc` | Zsh interactive configuration: options, completion, prompt, aliases |
 | `.config/fish/config.fish` | Fish configuration; mirrors `.profile` and the bash/zsh aliases |
 | `.tmux.conf` | Tmux terminal multiplexer configuration |
+| `.config/jj/conf.d/dotfiles.toml` | jj aliases shared by every shell; your own jj settings stay in `~/.config/jj/config.toml` |
 | `.gitignore` | Files to ignore in this repository (not linked into `$HOME`) |
 | `.stow-local-ignore` | Files for Stow to ignore when symlinking (must be named `.stow-local-ignore`; Stow does not read a `.stow-global-ignore` placed inside a package) |
 
@@ -198,6 +203,28 @@ Fish cannot read `.profile`, so mirror the change in
 - `gbp <branch>` - Create a git branch and push it with upstream tracking
 - `g`, `ga`, `gaa`, `gc`, `gcm`, `gco`, `gd`, `gds`, `gl`, `gp`, `gpl`, `gs`,
   `gst`, `gstp` - Git shortcuts (abbreviations in fish)
+- `j` - `jj` (an abbreviation in fish)
+
+### jj Aliases
+
+These are jj's own aliases, defined in `~/.config/jj/conf.d/dotfiles.toml`, so
+they work the same in every shell and jj completes them. jj already ships
+`st`, `b` (bookmark), `ci` (commit) and `desc` (describe).
+
+| Command | Does | git counterpart |
+|---------|------|-----------------|
+| `jj bp NAME` | create bookmark `NAME` on your change and push it, tracked | `gbp NAME` |
+| `jj l` | one line per change | `gl` |
+| `jj push` / `jj fetch` | `jj git push` / `jj git fetch` | `gp` / `gpl` |
+| `jj tug` | move the nearest bookmark up to `@-`, i.e. onto what `jj commit` just finished | — |
+
+`jj bp` puts the bookmark on `@` if it has content, otherwise on `@-`, which is
+where `jj commit` leaves your work. To override one of these aliases, set it
+in a file that sorts later, such as `~/.config/jj/conf.d/zz-local.toml`.
+
+jj completion is generated once with `COMPLETE=<shell> jj` and cached under
+`~/.cache/dotfiles`; it is regenerated when the jj binary is newer than the
+cache, i.e. after an upgrade.
 
 ## VCS Prompt
 
@@ -239,6 +266,21 @@ slower. The trade-off is that `*` reflects the last snapshot rather than this
 instant; it catches up the next time any jj command runs. Set
 `DOTFILES_JJ_SNAPSHOT=1` to get an always-accurate marker at the cost of
 mutating the repo on every prompt.
+
+**Colocated repos fall back to git.** If jj is missing, fails, or is older
+than 0.22 (the first release with bookmarks), a repo that has `.git` beside
+`.jj` shows the git prompt instead of nothing. A pure jj repo shows nothing:
+it does not borrow the prompt of a git repo that happens to enclose it.
+
+**Hardening.** As with git, a repo you merely `cd` into cannot run code
+through the prompt:
+- The prompt pins `signing.behavior=drop` and `fsmonitor.backend=none`. With
+  `DOTFILES_JJ_SNAPSHOT=1` the snapshot writes a commit, and a config that
+  forces signing would otherwise run its `signing.backends.*.program`.
+- A repo that still has its config at the pre-0.38 location (a regular file
+  at `.jj/repo/config.toml`) is skipped. jj 0.38+ would move that file under
+  `~/.config/jj/repos/` and trust it from then on, so the prompt leaves that
+  step to the first jj command you run there yourself.
 
 ## Troubleshooting
 
