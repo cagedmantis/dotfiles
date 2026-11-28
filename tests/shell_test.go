@@ -485,3 +485,70 @@ func TestMouseTrackingResetHook(t *testing.T) {
 		})
 	}
 }
+
+// TestZshCompinitCache guards a past bug: the once-a-day check on ~/.zcompdump
+// used a glob qualifier that needs EXTENDED_GLOB, which is off, so every zsh
+// start ran the full compinit. compaudit is the part only the full run does,
+// so a compaudit placed first in fpath (via ~/.docker/completions, which
+// .zshrc prepends before compinit) reports which path ran. It must then run
+// the real compaudit: that is also what fills in the file list compinit
+// compares with the dump, and a stub that skipped it made every full run
+// rebuild the dump, hiding a missing touch.
+func TestZshCompinitCache(t *testing.T) {
+	zsh := shellNamed("zsh")
+	if _, err := lookShell(zsh); err != nil {
+		t.Skip("zsh not installed")
+	}
+	home := stowInto(t)
+	marker := filepath.Join(home, "compaudit-ran")
+	fakes := filepath.Join(home, ".docker", "completions")
+	if err := os.MkdirAll(fakes, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write(t, filepath.Join(fakes, "compaudit"), ": >> '"+marker+"'\n"+
+		"local f\n"+
+		"for f in ${^fpath:#'"+fakes+"'}/compaudit(N); do builtin source \"$f\"; return; done\n"+
+		"return 1\n")
+	dump := filepath.Join(home, ".zcompdump")
+
+	start := func() (full bool) {
+		t.Helper()
+		_ = os.Remove(marker)
+		runShell(t, zsh, home, "true")
+		_, err := os.Stat(marker)
+		return err == nil
+	}
+	mtime := func() time.Time {
+		t.Helper()
+		fi, err := os.Stat(dump)
+		if err != nil {
+			t.Fatalf("no %s: %v", dump, err)
+		}
+		return fi.ModTime()
+	}
+
+	if !start() {
+		t.Error("no dump yet: want the full compinit")
+	}
+	fresh := mtime()
+	if start() {
+		t.Error("dump is fresh: want compinit -C, but the full compinit ran")
+	}
+	if !mtime().Equal(fresh) {
+		t.Error("compinit -C changed the dump")
+	}
+
+	old := time.Now().Add(-48 * time.Hour)
+	if err := os.Chtimes(dump, old, old); err != nil {
+		t.Fatal(err)
+	}
+	if !start() {
+		t.Error("dump is two days old: want the full compinit")
+	}
+	if !mtime().After(old.Add(time.Hour)) {
+		t.Error("the full compinit left the dump's mtime old, so it would run on every start")
+	}
+	if start() {
+		t.Error("after the daily full run, the next start should use compinit -C")
+	}
+}

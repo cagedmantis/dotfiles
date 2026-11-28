@@ -42,12 +42,24 @@ setopt PROMPT_SUBST
 [[ -d /opt/homebrew/share/zsh/site-functions ]] && fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 
 autoload -Uz compinit
-# Regenerate the dump only once per day; use cached version otherwise
-if [[ -n ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
-    compinit
-else
-    compinit -C
-fi
+# Run the full compinit -- with its compaudit security check of fpath -- at most
+# once a day, and the fast `compinit -C` from the cached dump otherwise.
+#
+# The (#q...) glob qualifier needs EXTENDED_GLOB, hence the anonymous function
+# with a local setopt; without it the test was always true, so every start ran
+# the full version. The touch matters too: a full compinit rewrites the dump
+# only when the set of completion files changed, so without it a dump that
+# turned 24 hours old stayed "old" and the full run happened every time again.
+() {
+    setopt localoptions extendedglob
+    local dump=${ZDOTDIR:-$HOME}/.zcompdump
+    if [[ ! -e $dump || -n $dump(#qN.mh+24) ]]; then
+        compinit -d "$dump"
+        touch "$dump"
+    else
+        compinit -C -d "$dump"
+    fi
+}
 
 # Case insensitive completion with menu selection
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
